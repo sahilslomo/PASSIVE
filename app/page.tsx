@@ -214,23 +214,19 @@ export default function HomePage() {
 
               {/* LOGIN / USER */}
               {user ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 max-w-full">
 
-                  <div className="bg-gray-100 px-4 py-2 rounded-2xl max-w-[160px]">
-
-                    <p className="text-xs text-gray-500">
-                      Signed in
-                    </p>
+                  <div className="bg-gray-100 px-4 py-2 rounded-2xl max-w-[140px] min-w-0">
+                    <p className="text-xs text-gray-500">Signed in</p>
 
                     <p className="text-sm font-medium truncate">
                       {user.email}
                     </p>
-
                   </div>
 
                   <button
                     onClick={handleLogout}
-                    className="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center"
+                    className="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center flex-shrink-0"
                   >
                     <LogOut size={18} />
                   </button>
@@ -241,7 +237,7 @@ export default function HomePage() {
                   onClick={() => setShowAuth(true)}
                   className="bg-black text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium"
                 >
-                  <User size={10} />
+                  <User size={16} />
                   Login
                 </button>
               )}
@@ -476,8 +472,8 @@ export default function HomePage() {
               {loading
                 ? "Please wait..."
                 : isSignup
-                ? "Create Account"
-                : "Login with Email"}
+                  ? "Create Account"
+                  : "Login with Email"}
 
             </button>
 
