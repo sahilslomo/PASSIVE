@@ -241,7 +241,7 @@ export default function HomePage() {
                   onClick={() => setShowAuth(true)}
                   className="bg-black text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium"
                 >
-                  <User size={16} />
+                  <User size={10} />
                   Login
                 </button>
               )}
