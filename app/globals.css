@@ -24,3 +24,60 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+ /* =========================
+   NAVIK LOADER ANIMATIONS
+========================= */
+
+@keyframes floatShip {
+  0% {
+    transform: translateY(0px) rotate(-3deg);
+  }
+
+  50% {
+    transform: translateY(-8px) rotate(3deg);
+  }
+
+  100% {
+    transform: translateY(0px) rotate(-3deg);
+  }
+}
+
+@keyframes waveMove1 {
+  0% {
+    transform: translateX(0px);
+      }
+
+  50% {
+    transform: translateX(10px);
+  }
+
+  100% {
+    transform: translateX(0px);
+  }
+}
+
+@keyframes waveMove2 {
+  0% {
+    transform: translateX(0px);
+  }
+
+  50% {
+    transform: translateX(-10px);
+  }
+
+  100% {
+    transform: translateX(0px);
+  }
+  }
+
+.animate-float {
+  animation: floatShip 2.5s ease-in-out infinite;
+}
+
+.animate-wave1 {
+  animation: waveMove1 3s ease-in-out infinite;
+}
+
+.animate-wave2 {
+  animation: waveMove2 4s ease-in-out infinite;
+}

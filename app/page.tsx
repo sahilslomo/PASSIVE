@@ -69,23 +69,23 @@ export default function HomePage() {
   const functions = [
     {
       code: "FN3",
-      title: "Safety & Regulations",
-      desc: "Important oral preparation topics and regulations.",
+      title: "SAFETY",
+      desc: "IMO, MLC, UNCLOS, ETC",
     },
     {
       code: "FN4B",
-      title: "Motor",
-      desc: "Motor operation and maintenance topics.",
+      title: "MOTOR",
+      desc: "PISTON, LINER, ETC",
     },
     {
       code: "FN5",
-      title: "Electrical",
-      desc: "Electrical systems and protection topics.",
+      title: "ELECTRICAL",
+      desc: "EARTH FAULT, ICCP, ETC",
     },
     {
       code: "FN6",
       title: "MEP",
-      desc: "Marine engineering practice questions.",
+      desc: "MAC, STP, FWG, ETC",
     },
   ];
 
