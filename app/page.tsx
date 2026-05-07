@@ -219,7 +219,7 @@ export default function HomePage() {
                   <div className="bg-gray-100 px-4 py-2 rounded-2xl max-w-[140px] min-w-0">
                     <p className="text-xs text-gray-500">Signed in</p>
 
-                    <p className="text-sm font-medium truncate">
+                    <p className="text-sm font-medium truncate max-w-[60px]">
                       {user.email}
                     </p>
                   </div>
