@@ -15,8 +15,7 @@ import {
   Filter,
   Star,
   Search,
-  HelpCircle,
-  Brain,
+  MessageCircle,
 } from "lucide-react";
 
 import { db } from "@/lib/firebase";
@@ -171,8 +170,8 @@ export default function QuestionsPage() {
     setBookmarks((prev) =>
       prev.includes(id)
         ? prev.filter(
-            (b) => b !== id
-          )
+          (b) => b !== id
+        )
         : [...prev, id]
     );
   };
@@ -183,8 +182,8 @@ export default function QuestionsPage() {
     setOpenAnswers((prev) =>
       prev.includes(id)
         ? prev.filter(
-            (x) => x !== id
-          )
+          (x) => x !== id
+        )
         : [...prev, id]
     );
   };
@@ -202,8 +201,8 @@ export default function QuestionsPage() {
     setSelectedLabels((prev) =>
       prev.includes(label)
         ? prev.filter(
-            (l) => l !== label
-          )
+          (l) => l !== label
+        )
         : [...prev, label]
     );
   };
@@ -231,16 +230,15 @@ export default function QuestionsPage() {
 
       const matchesSearch =
         search === "" ||
-        questionText.includes(
-          search
-        ) ||
-        answerText.includes(
-          search
+        questionText.includes(search) ||
+        answerText.includes(search) ||
+        q.labels?.some((l) =>
+          l.value.toLowerCase().includes(search)
         );
 
       const matchesLabel =
         selectedLabels.length ===
-          0 ||
+        0 ||
         q.labels?.some((l) =>
           selectedLabels.includes(
             l.value
@@ -384,7 +382,7 @@ export default function QuestionsPage() {
 
                       <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shrink-0">
 
-                        <Brain size={22} />
+                        <MessageCircle size={22} />
 
                       </div>
 
@@ -439,12 +437,11 @@ export default function QuestionsPage() {
                         ) => (
                           <span
                             key={idx}
-                            className={`text-xs px-2 py-1 rounded-full text-white ${
-                              l.type ===
-                              "city"
+                            className={`text-xs px-2 py-1 rounded-full text-white ${l.type ===
+                                "city"
                                 ? "bg-blue-500"
                                 : "bg-green-600"
-                            }`}
+                              }`}
                           >
                             {
                               l.value
@@ -478,14 +475,14 @@ export default function QuestionsPage() {
 
           {filteredQuestions.length ===
             0 && (
-            <div className="bg-white border border-gray-200 rounded-3xl p-8 text-center">
+              <div className="bg-white border border-gray-200 rounded-3xl p-8 text-center">
 
-              <p className="text-gray-500">
-                No questions found.
-              </p>
+                <p className="text-gray-500">
+                  No questions found.
+                </p>
 
-            </div>
-          )}
+              </div>
+            )}
 
         </div>
 
@@ -525,13 +522,12 @@ export default function QuestionsPage() {
                         l
                       )
                     }
-                    className={`px-3 py-2 text-xs rounded-xl border ${
-                      selectedLabels.includes(
-                        l
-                      )
+                    className={`px-3 py-2 text-xs rounded-xl border ${selectedLabels.includes(
+                      l
+                    )
                         ? "bg-black text-white border-black"
                         : "bg-white text-black border-gray-200"
-                    }`}
+                      }`}
                   >
                     {l}
                   </button>
