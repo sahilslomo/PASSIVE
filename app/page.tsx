@@ -416,9 +416,21 @@ export default function HomePage() {
               className="w-full border border-gray-300 rounded-2xl py-4 px-4 flex items-center justify-center gap-3 font-medium hover:bg-gray-50 transition-all mb-5"
             >
 
-              {loading
-                ? "Please wait..."
-                : "Continue with Google"}
+              {loading ? (
+                "Please wait..."
+              ) : (
+                <>
+                  <img
+                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                    alt="Google"
+                    className="w-5 h-5"
+                  />
+
+                  <span>
+                    Continue with Google
+                  </span>
+                </>
+              )}
 
             </button>
 
