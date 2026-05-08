@@ -315,6 +315,16 @@ export default function QuestionsPage() {
               {topicName}
             </p>
 
+           <div className="mt-5 border-l-4 border-cyan-500 pl-4">
+  <p className="text-base md:text-lg font-medium italic text-gray-700 leading-7">
+    “Keep Showing Up Daily —
+    <span className="text-cyan-600 font-semibold">
+      {" "}Consistency Always Wins.
+    </span>
+  </p>
+</div>
+
+
           </div>
 
         </div>
@@ -438,9 +448,9 @@ export default function QuestionsPage() {
                           <span
                             key={idx}
                             className={`text-xs px-2 py-1 rounded-full text-white ${l.type ===
-                                "city"
-                                ? "bg-blue-500"
-                                : "bg-green-600"
+                              "city"
+                              ? "bg-blue-500"
+                              : "bg-green-600"
                               }`}
                           >
                             {
@@ -525,8 +535,8 @@ export default function QuestionsPage() {
                     className={`px-3 py-2 text-xs rounded-xl border ${selectedLabels.includes(
                       l
                     )
-                        ? "bg-black text-white border-black"
-                        : "bg-white text-black border-gray-200"
+                      ? "bg-black text-white border-black"
+                      : "bg-white text-black border-gray-200"
                       }`}
                   >
                     {l}

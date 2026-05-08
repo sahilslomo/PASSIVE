@@ -25,6 +25,7 @@ import {
   Home,
   Bookmark,
   Filter,
+  Search,
 } from "lucide-react";
 
 import {
@@ -63,6 +64,9 @@ export default function TopicsPage() {
 
   const [loading, setLoading] =
     useState(true);
+
+  const [searchText, setSearchText] =
+    useState("");
 
   const functionTitle =
     functionNames?.[functionId] ||
@@ -118,6 +122,30 @@ export default function TopicsPage() {
     fetchTopics();
 
   }, [classId, functionId]);
+
+  /* =========================
+     SEARCH FILTER
+  ========================= */
+
+  const filteredTopics =
+    topics.filter((topic: any) => {
+
+      const title =
+        topic.title?.toLowerCase() ||
+        "";
+
+      const description =
+        topic.description?.toLowerCase() ||
+        "";
+
+      const search =
+        searchText.toLowerCase();
+
+      return (
+        title.includes(search) ||
+        description.includes(search)
+      );
+    });
 
   /* =========================
      LOADER
@@ -196,16 +224,41 @@ export default function TopicsPage() {
 
           <div className="mt-5">
 
-            <h2 className="text-3xl font-bold leading-tight">
+            <h2 className="text-xl font-bold leading-tight">
               {functionTitle}
             </h2>
 
-            <p className="text-gray-500 mt-2 leading-6">
-              Browse all available oral
-              preparation topics.
+            <div className="mt-5 border-l-4 border-cyan-500 pl-4"></div>
+            <p className="text-base md:text-lg font-medium italic text-gray-700 leading-7">
+              “Don’t think from where to Begin.
+              Just Start —
+              <span className="text-cyan-600 font-semibold">
+                {" "}Success Follows Consistency."
+              </span>
             </p>
-
           </div>
+
+        </div>
+
+        {/* SEARCH */}
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-3 flex items-center gap-2 mb-5">
+
+          <Search
+            size={18}
+            className="text-gray-500"
+          />
+
+          <input
+            value={searchText}
+            onChange={(e) =>
+              setSearchText(
+                e.target.value
+              )
+            }
+            placeholder="Search topics..."
+            className="w-full outline-none bg-transparent"
+          />
 
         </div>
 
@@ -220,14 +273,14 @@ export default function TopicsPage() {
             </h2>
 
             <p className="text-sm text-gray-400">
-              {topics.length} Topics
+              {filteredTopics.length} Topics
             </p>
 
           </div>
 
           <div className="space-y-4">
 
-            {topics.map(
+            {filteredTopics.map(
               (topic: any) => (
                 <button
                   key={topic.id}
@@ -278,11 +331,11 @@ export default function TopicsPage() {
 
             {/* EMPTY STATE */}
 
-            {topics.length === 0 && (
+            {filteredTopics.length === 0 && (
               <div className="bg-white border border-gray-200 rounded-3xl p-8 text-center">
 
                 <p className="text-gray-500">
-                  No topics added yet.
+                  No topics found.
                 </p>
 
               </div>

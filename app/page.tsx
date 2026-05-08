@@ -207,7 +207,7 @@ export default function HomePage() {
                   </h1>
 
                   <p className="text-sm text-gray-500">
-                    MMD Oral Preparation
+                    Sail towards CoC
                   </p>
                 </div>
               </div>
@@ -260,11 +260,11 @@ export default function HomePage() {
             >
 
               <option value="class2">
-                Class 2 Oral Questions
+                MEO CLASS 2
               </option>
 
               <option value="class4">
-                Class 4 Oral Questions
+                MEO CLASS 4
               </option>
 
             </select>

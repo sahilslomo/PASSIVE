@@ -14,53 +14,61 @@ import {
 import { db } from "@/lib/firebase";
 
 import {
-  Plus,
   Trash2,
   BookOpen,
   CircleHelp,
+  Pencil,
 } from "lucide-react";
 
 export default function AdminPage() {
-  const [classId, setClassId] =
-    useState("class2");
+  const [classId, setClassId] = useState("class2");
 
-  const [functionId, setFunctionId] =
-    useState("fn3");
+  const [functionId, setFunctionId] = useState("fn3");
 
-  const [topicTitle, setTopicTitle] =
-    useState("");
+  const [topicTitle, setTopicTitle] = useState("");
 
-  const [topicDesc, setTopicDesc] =
-    useState("");
+  const [topicDesc, setTopicDesc] = useState("");
 
   const [topics, setTopics] = useState<any[]>([]);
 
-  const [selectedTopic, setSelectedTopic] =
-    useState("");
+  const [questions, setQuestions] = useState<any[]>([]);
 
-  const [question, setQuestion] =
-    useState("");
+  const [selectedTopic, setSelectedTopic] = useState("");
 
-  const [answer, setAnswer] =
-    useState("");
+  const [question, setQuestion] = useState("");
 
-  const [editId, setEditId] =
+  const [answer, setAnswer] = useState("");
+
+  const [editQuestionId, setEditQuestionId] =
+    useState<string | null>(null);
+
+  const [editTopicId, setEditTopicId] =
     useState<string | null>(null);
 
   /* =========================
-     LABEL SYSTEM (NEW)
+     LABEL SYSTEM
   ========================= */
 
-  const labelOptions = ["MUMBAI", "CHENNAI", "KOCHI", "KOLKATA"];
+  const labelOptions = [
+    "MUMBAI",
+    "CHENNAI",
+    "KOCHI",
+    "KOLKATA",
+  ];
+
   const [labels, setLabels] = useState<string[]>([]);
-  const [customLabel, setCustomLabel] = useState("");
+
+  const [customLabel, setCustomLabel] =
+    useState("");
 
   /* =========================
-     LOAD TOPICS
+     FETCH DATA
   ========================= */
 
   const fetchTopics = async () => {
-    const snapshot = await getDocs(collection(db, "topics"));
+    const snapshot = await getDocs(
+      collection(db, "topics")
+    );
 
     const data = snapshot.docs.map((doc) => ({
       id: doc.id,
@@ -70,31 +78,88 @@ export default function AdminPage() {
     setTopics(data);
   };
 
+  const fetchQuestions = async () => {
+    const snapshot = await getDocs(
+      collection(db, "questions")
+    );
+
+    const data = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    setQuestions(data);
+  };
+
   useEffect(() => {
     fetchTopics();
+    fetchQuestions();
   }, []);
 
   /* =========================
-     ADD TOPIC
+     ADD / UPDATE TOPIC
   ========================= */
 
   const handleAddTopic = async () => {
-    if (!topicTitle) return alert("Enter topic title");
+    if (!topicTitle) {
+      alert("Enter topic title");
+      return;
+    }
 
-    await addDoc(collection(db, "topics"), {
+    const payload = {
       classId,
       functionId,
       title: topicTitle,
       description: topicDesc,
-    });
+    };
+
+    if (editTopicId) {
+      await updateDoc(
+        doc(db, "topics", editTopicId),
+        payload
+      );
+
+      setEditTopicId(null);
+    } else {
+      await addDoc(collection(db, "topics"), payload);
+    }
 
     setTopicTitle("");
     setTopicDesc("");
+
     fetchTopics();
   };
 
   /* =========================
-     ADD / EDIT QUESTION
+     EDIT TOPIC
+  ========================= */
+
+  const handleEditTopic = (topic: any) => {
+    setEditTopicId(topic.id);
+
+    setTopicTitle(topic.title);
+
+    setTopicDesc(topic.description || "");
+
+    setClassId(topic.classId);
+
+    setFunctionId(topic.functionId);
+  };
+
+  /* =========================
+     DELETE TOPIC
+  ========================= */
+
+  const handleDeleteTopic = async (
+    id: string
+  ) => {
+    await deleteDoc(doc(db, "topics", id));
+
+    fetchTopics();
+  };
+
+  /* =========================
+     ADD / UPDATE QUESTION
   ========================= */
 
   const handleAddQuestion = async () => {
@@ -108,16 +173,25 @@ export default function AdminPage() {
       q: question,
       a: answer,
       labels: labels.map((l) => ({
-        type: labelOptions.includes(l) ? "city" : "tag",
+        type: labelOptions.includes(l)
+          ? "city"
+          : "tag",
         value: l,
       })),
     };
 
-    if (editId) {
-      await updateDoc(doc(db, "questions", editId), payload);
-      setEditId(null);
+    if (editQuestionId) {
+      await updateDoc(
+        doc(db, "questions", editQuestionId),
+        payload
+      );
+
+      setEditQuestionId(null);
     } else {
-      await addDoc(collection(db, "questions"), payload);
+      await addDoc(
+        collection(db, "questions"),
+        payload
+      );
     }
 
     setQuestion("");
@@ -125,16 +199,37 @@ export default function AdminPage() {
     setLabels([]);
     setCustomLabel("");
 
-    fetchTopics();
+    fetchQuestions();
   };
 
   /* =========================
-     DELETE TOPIC
+     EDIT QUESTION
   ========================= */
 
-  const handleDeleteTopic = async (id: string) => {
-    await deleteDoc(doc(db, "topics", id));
-    fetchTopics();
+  const handleEditQuestion = (q: any) => {
+    setEditQuestionId(q.id);
+
+    setSelectedTopic(q.topicId);
+
+    setQuestion(q.q);
+
+    setAnswer(q.a);
+
+    setLabels(
+      q.labels?.map((l: any) => l.value) || []
+    );
+  };
+
+  /* =========================
+     DELETE QUESTION
+  ========================= */
+
+  const handleDeleteQuestion = async (
+    id: string
+  ) => {
+    await deleteDoc(doc(db, "questions", id));
+
+    fetchQuestions();
   };
 
   /* =========================
@@ -143,7 +238,9 @@ export default function AdminPage() {
 
   const toggleLabel = (label: string) => {
     if (labels.includes(label)) {
-      setLabels(labels.filter((l) => l !== label));
+      setLabels(
+        labels.filter((l) => l !== label)
+      );
     } else {
       setLabels([...labels, label]);
     }
@@ -152,7 +249,8 @@ export default function AdminPage() {
   const addCustomLabel = () => {
     if (!customLabel.trim()) return;
 
-    const value = customLabel.trim().toUpperCase();
+    const value =
+      customLabel.trim().toUpperCase();
 
     if (!labels.includes(value)) {
       setLabels([...labels, value]);
@@ -161,85 +259,128 @@ export default function AdminPage() {
     setCustomLabel("");
   };
 
+  /* =========================
+     UI
+  ========================= */
+
   return (
     <main className="min-h-screen bg-[#f5f5f5] p-5">
-
-      <div className="max-w-md mx-auto">
+      <div className="max-w-2xl mx-auto">
 
         <h1 className="text-3xl font-bold mb-8">
           NAVIK Admin
         </h1>
 
-        {/* TOPIC SECTION */}
+        {/* ================= TOPIC SECTION ================= */}
+
         <div className="bg-white rounded-3xl p-5 mb-8 border">
 
           <div className="flex items-center gap-2 mb-5">
             <BookOpen size={20} />
-            <h2 className="text-xl font-bold">Add Topic</h2>
+
+            <h2 className="text-xl font-bold">
+              {editTopicId
+                ? "Edit Topic"
+                : "Add Topic"}
+            </h2>
           </div>
 
           <div className="space-y-4">
 
             <select
               value={classId}
-              onChange={(e) => setClassId(e.target.value)}
-              className="w-full border p-2"
+              onChange={(e) =>
+                setClassId(e.target.value)
+              }
+              className="w-full border p-3 rounded-xl"
             >
-              <option value="class2">Class 2</option>
-              <option value="class4">Class 4</option>
+              <option value="class2">
+                Class 2
+              </option>
+
+              <option value="class4">
+                Class 4
+              </option>
             </select>
 
             <select
               value={functionId}
-              onChange={(e) => setFunctionId(e.target.value)}
-              className="w-full border p-2"
+              onChange={(e) =>
+                setFunctionId(e.target.value)
+              }
+              className="w-full border p-3 rounded-xl"
             >
               <option value="fn3">FN3</option>
-              <option value="fn4b">FN4B</option>
+
+              <option value="fn4b">
+                FN4B
+              </option>
+
               <option value="fn5">FN5</option>
+
               <option value="fn6">FN6</option>
             </select>
 
             <input
               value={topicTitle}
-              onChange={(e) => setTopicTitle(e.target.value)}
+              onChange={(e) =>
+                setTopicTitle(e.target.value)
+              }
               placeholder="Topic title"
-              className="w-full border p-2"
+              className="w-full border p-3 rounded-xl"
             />
 
             <textarea
               value={topicDesc}
-              onChange={(e) => setTopicDesc(e.target.value)}
+              onChange={(e) =>
+                setTopicDesc(e.target.value)
+              }
               placeholder="Description"
-              className="w-full border p-2"
+              className="w-full border p-3 rounded-xl"
             />
 
             <button
               onClick={handleAddTopic}
-              className="w-full bg-black text-white p-2"
+              className="w-full bg-black text-white p-3 rounded-xl"
             >
-              Add Topic
+              {editTopicId
+                ? "Update Topic"
+                : "Add Topic"}
             </button>
 
           </div>
         </div>
 
-        {/* QUESTION SECTION */}
+        {/* ================= QUESTION SECTION ================= */}
+
         <div className="bg-white rounded-3xl p-5 mb-8 border">
 
           <div className="flex items-center gap-2 mb-5">
             <CircleHelp size={20} />
-            <h2 className="text-xl font-bold">Add Question</h2>
+
+            <h2 className="text-xl font-bold">
+              {editQuestionId
+                ? "Edit Question"
+                : "Add Question"}
+            </h2>
           </div>
 
           <select
             value={selectedTopic}
-            onChange={(e) => setSelectedTopic(e.target.value)}
-            className="w-full border p-2 mb-3"
+            onChange={(e) =>
+              setSelectedTopic(e.target.value)
+            }
+            className="w-full border p-3 rounded-xl mb-3"
           >
-            <option value="">Select Topic</option>
+            <option value="">
+              Select Topic
+            </option>
+
             {topics.map((t) => (
-              <option key={t.id} value={t.id}>
+              <option
+                key={t.id}
+                value={t.id}
+              >
                 {t.title}
               </option>
             ))}
@@ -247,75 +388,216 @@ export default function AdminPage() {
 
           <input
             value={question}
-            onChange={(e) => setQuestion(e.target.value)}
+            onChange={(e) =>
+              setQuestion(e.target.value)
+            }
             placeholder="Question"
-            className="w-full border p-2 mb-2"
+            className="w-full border p-3 rounded-xl mb-3"
           />
 
           <textarea
             value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
+            onChange={(e) =>
+              setAnswer(e.target.value)
+            }
             placeholder="Answer"
-            className="w-full border p-2 mb-2"
+            className="w-full border p-3 rounded-xl mb-3"
           />
 
           {/* LABELS */}
-          <div className="flex flex-wrap gap-2 mb-2">
+
+          <div className="flex flex-wrap gap-2 mb-3">
+
             {labelOptions.map((l) => (
               <button
                 key={l}
-                onClick={() => toggleLabel(l)}
-                className={`px-2 py-1 text-xs border ${
-                  labels.includes(l) ? "bg-black text-white" : ""
+                onClick={() =>
+                  toggleLabel(l)
+                }
+                className={`px-3 py-1 rounded-full border text-sm ${
+                  labels.includes(l)
+                    ? "bg-black text-white"
+                    : "bg-white"
                 }`}
               >
                 {l}
               </button>
             ))}
+
           </div>
 
-          <div className="flex gap-2 mb-2">
+          <div className="flex gap-2 mb-3">
+
             <input
               value={customLabel}
-              onChange={(e) => setCustomLabel(e.target.value)}
-              className="border flex-1 p-1"
+              onChange={(e) =>
+                setCustomLabel(e.target.value)
+              }
+              className="border flex-1 p-2 rounded-xl"
               placeholder="Custom label"
             />
-            <button onClick={addCustomLabel}>+</button>
+
+            <button
+              onClick={addCustomLabel}
+              className="bg-black text-white px-4 rounded-xl"
+            >
+              +
+            </button>
+
           </div>
 
           <button
             onClick={handleAddQuestion}
-            className="w-full bg-black text-white p-2"
+            className="w-full bg-black text-white p-3 rounded-xl"
           >
-            {editId ? "Update Question" : "Add Question"}
+            {editQuestionId
+              ? "Update Question"
+              : "Add Question"}
           </button>
 
         </div>
 
-        {/* TOPIC LIST */}
-        <div className="space-y-4">
+        {/* ================= TOPICS LIST ================= */}
 
-          {topics.map((t) => (
-            <div key={t.id} className="bg-white p-4 border rounded-xl">
+        <div className="mb-10">
 
-              <div className="flex justify-between">
-                <b>{t.title}</b>
+          <h2 className="text-2xl font-bold mb-4">
+            Topics
+          </h2>
 
-                <button onClick={() => handleDeleteTopic(t.id)}>
-                  <Trash2 size={16} />
-                </button>
+          <div className="space-y-4">
+
+            {topics.map((t) => (
+              <div
+                key={t.id}
+                className="bg-white p-4 border rounded-2xl"
+              >
+                <div className="flex justify-between items-start">
+
+                  <div>
+                    <h3 className="font-bold text-lg">
+                      {t.title}
+                    </h3>
+
+                    <p className="text-sm text-gray-500">
+                      {t.classId} •{" "}
+                      {t.functionId}
+                    </p>
+
+                    {t.description && (
+                      <p className="text-sm mt-2">
+                        {t.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+
+                    <button
+                      onClick={() =>
+                        handleEditTopic(t)
+                      }
+                      className="p-2 border rounded-lg"
+                    >
+                      <Pencil size={16} />
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        handleDeleteTopic(t.id)
+                      }
+                      className="p-2 border rounded-lg text-red-500"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+
+                  </div>
+                </div>
+
+                {/* QUESTIONS */}
+
+                <div className="mt-5 space-y-3">
+
+                  {questions
+                    .filter(
+                      (q) =>
+                        q.topicId === t.id
+                    )
+                    .map((q) => (
+                      <div
+                        key={q.id}
+                        className="border rounded-xl p-3 bg-gray-50"
+                      >
+                        <div className="flex justify-between gap-3">
+
+                          <div className="flex-1">
+
+                            <p className="font-medium">
+                              Q. {q.q}
+                            </p>
+
+                            <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">
+                              {q.a}
+                            </p>
+
+                            {q.labels?.length >
+                              0 && (
+                              <div className="flex flex-wrap gap-2 mt-3">
+
+                                {q.labels.map(
+                                  (
+                                    l: any,
+                                    i: number
+                                  ) => (
+                                    <span
+                                      key={i}
+                                      className="text-xs bg-black text-white px-2 py-1 rounded-full"
+                                    >
+                                      {l.value}
+                                    </span>
+                                  )
+                                )}
+
+                              </div>
+                            )}
+
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+
+                            <button
+                              onClick={() =>
+                                handleEditQuestion(
+                                  q
+                                )
+                              }
+                              className="p-2 border rounded-lg"
+                            >
+                              <Pencil size={15} />
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                handleDeleteQuestion(
+                                  q.id
+                                )
+                              }
+                              className="p-2 border rounded-lg text-red-500"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                </div>
               </div>
+            ))}
 
-              <p className="text-sm text-gray-500">
-                {t.classId} • {t.functionId}
-              </p>
-
-            </div>
-          ))}
-
+          </div>
         </div>
-
       </div>
     </main>
   );
