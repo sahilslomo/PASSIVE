@@ -268,7 +268,7 @@ export default function QuestionsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f5f5] text-black pb-28">
+    <main className="min-h-screen bg-[#f5f5f5] text-black pb-28 select-none">
 
       <div className="max-w-md mx-auto px-5 pt-5">
 
