@@ -315,14 +315,14 @@ export default function QuestionsPage() {
               {topicName}
             </p>
 
-           <div className="mt-5 border-l-4 border-cyan-500 pl-4">
-  <p className="text-base md:text-lg font-medium italic text-gray-700 leading-7">
-    “Keep Showing Up Daily —
-    <span className="text-cyan-600 font-semibold">
-      {" "}Consistency Always Wins.
-    </span>
-  </p>
-</div>
+            <div className="mt-5 border-l-4 border-cyan-500 pl-4">
+              <p className="text-base md:text-lg font-medium italic text-gray-700 leading-7">
+                “Keep Showing Up Daily —
+                <span className="text-cyan-600 font-semibold">
+                  {" "}Consistency Always Wins.
+                </span>
+              </p>
+            </div>
 
 
           </div>

@@ -228,14 +228,15 @@ export default function TopicsPage() {
               {functionTitle}
             </h2>
 
-            <div className="mt-5 border-l-4 border-cyan-500 pl-4"></div>
-            <p className="text-base md:text-lg font-medium italic text-gray-700 leading-7">
-              “Don’t think from where to Begin.
-              Just Start —
-              <span className="text-cyan-600 font-semibold">
-                {" "}Success Follows Consistency."
-              </span>
-            </p>
+            <div className="mt-5 border-l-4 border-cyan-500 pl-4">
+              <p className="text-base md:text-lg font-medium italic text-gray-700 leading-7">
+                “Don’t think from where to Begin.
+                Just Start —
+                <span className="text-cyan-600 font-semibold">
+                  {" "}Success Follows Consistency.”
+                </span>
+              </p>
+            </div>
           </div>
 
         </div>
