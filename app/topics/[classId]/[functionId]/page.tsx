@@ -127,25 +127,28 @@ export default function TopicsPage() {
      SEARCH FILTER
   ========================= */
 
-  const filteredTopics =
-    topics.filter((topic: any) => {
+  const filteredTopics = topics
+  .filter((topic: any) => {
 
-      const title =
-        topic.title?.toLowerCase() ||
-        "";
+    const title =
+      topic.title?.toLowerCase() ||
+      "";
 
-      const description =
-        topic.description?.toLowerCase() ||
-        "";
+    const description =
+      topic.description?.toLowerCase() ||
+      "";
 
-      const search =
-        searchText.toLowerCase();
+    const search =
+      searchText.toLowerCase();
 
-      return (
-        title.includes(search) ||
-        description.includes(search)
-      );
-    });
+    return (
+      title.includes(search) ||
+      description.includes(search)
+    );
+  })
+  .sort((a: any, b: any) =>
+    a.title.localeCompare(b.title)
+  );
 
   /* =========================
      LOADER
