@@ -107,23 +107,35 @@ export default function HomePage() {
   ========================= */
 
   useEffect(() => {
+    let alreadyCounted = false;
+
     const unsubscribe =
       onAuthStateChanged(
         auth,
         async (currentUser) => {
           setUser(currentUser);
 
-          if (currentUser) {
+          if (
+            currentUser &&
+            !alreadyCounted
+          ) {
+            alreadyCounted = true;
+
             try {
               await updateDoc(
                 doc(db, "analytics", "live"),
                 {
-                  usersOnline: increment(1),
+                  usersOnline:
+                    increment(1),
                 }
               );
             } catch {
               await setDoc(
-                doc(db, "analytics", "live"),
+                doc(
+                  db,
+                  "analytics",
+                  "live"
+                ),
                 {
                   usersOnline: 1,
                   topicsViewedHour: 0,
@@ -135,7 +147,43 @@ export default function HomePage() {
         }
       );
 
-    return () => unsubscribe();
+    const handleUnload =
+      async () => {
+        if (
+          auth.currentUser &&
+          alreadyCounted
+        ) {
+          try {
+            await updateDoc(
+              doc(
+                db,
+                "analytics",
+                "live"
+              ),
+              {
+                usersOnline:
+                  increment(-1),
+              }
+            );
+          } catch { }
+        }
+      };
+
+    window.addEventListener(
+      "beforeunload",
+      handleUnload
+    );
+
+    return () => {
+      handleUnload();
+
+      window.removeEventListener(
+        "beforeunload",
+        handleUnload
+      );
+
+      unsubscribe();
+    };
   }, []);
 
   /* =========================
