@@ -21,7 +21,16 @@ import {
 } from "lucide-react";
 
 import dynamic from "next/dynamic";
+
 import "react-quill-new/dist/quill.snow.css";
+
+import "./quill.css";
+
+const ReactQuill = dynamic(
+  () => import("react-quill-new"),
+  { ssr: false }
+);
+
 
 export default function AdminPage() {
   const [classId, setClassId] = useState("class2");
@@ -47,11 +56,6 @@ export default function AdminPage() {
 
   const [editTopicId, setEditTopicId] =
     useState<string | null>(null);
-
-  const ReactQuill = dynamic(
-    () => import("react-quill-new"),
-    { ssr: false }
-  );
 
   /* =========================
      LABEL SYSTEM
@@ -338,22 +342,6 @@ export default function AdminPage() {
               className="w-full border p-3 rounded-xl"
             />
 
-            <ReactQuill
-              theme="snow"
-              value={answer}
-              onChange={setAnswer}
-              className="bg-white rounded-xl h-64 mb-12"
-              modules={{
-                toolbar: [
-                  [{ header: [1, 2, false] }],
-                  ["bold", "italic", "underline"],
-                  [{ list: "ordered" }, { list: "bullet" }],
-                  ["link", "image"],
-                  ["clean"],
-                ],
-              }}
-            />
-
             <button
               onClick={handleAddTopic}
               className="w-full bg-black text-white p-3 rounded-xl"
@@ -415,7 +403,7 @@ export default function AdminPage() {
               theme="snow"
               value={answer}
               onChange={setAnswer}
-              className="bg-white rounded-xl"
+              className="bg-white rounded-xl mb-12 min-h-[250px]"
               placeholder="Write formatted answer..."
             />
           </div>
@@ -575,8 +563,23 @@ export default function AdminPage() {
     [&_blockquote]:border-l-4
     [&_blockquote]:pl-4
     [&_blockquote]:italic
+    whitespace-pre-wrap
   "
-                              dangerouslySetInnerHTML={{ __html: q.a }}
+                              dangerouslySetInnerHTML={{
+                                __html:
+                                  typeof q.a === "string" &&
+                                    (
+                                      q.a.includes("<p") ||
+                                      q.a.includes("<strong") ||
+                                      q.a.includes("<ul") ||
+                                      q.a.includes("<ol") ||
+                                      q.a.includes("<h1") ||
+                                      q.a.includes("<div")
+                                    )
+                                    ? q.a
+                                    : q.a
+                                      ?.replace(/\n/g, "<br/>"),
+                              }}
                             />
 
                             {q.labels?.length >
