@@ -639,7 +639,7 @@ export default function QuestionsPage() {
         >
           {loadingRevision
             ? `Generating ${topicName} Revision...`
-            : `✨ Revise ${topicName}`}
+            : `✨ Revise  ${topicName} with 🪄 Study Genie`}
         </button>
 
         {revision && (
