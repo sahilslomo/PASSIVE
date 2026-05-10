@@ -554,16 +554,15 @@ export default function QuestionsPage() {
                       </p>
 
                       <div
-                       className="
-
+                      className="
 w-full
-min-w-0                       
+min-w-0
 text-gray-700
 leading-7
 whitespace-normal
 max-w-full
 overflow-hidden
-break-words
+break-normal
 
 [&_p]:mb-4
 [&_li]:mb-2
@@ -608,7 +607,7 @@ break-words
                                 (q.answer || q.a)?.includes("<ol") ||
                                 (q.answer || q.a)?.includes("<div")
                               )
-                              ? (q.answer || q.a)!
+                              ? (q.answer || q.a)!.replace(/&nbsp;/g, " ")
                               : (q.answer || q.a)!
                                 .replace(/\n/g, "<br/>"),
                         }}
