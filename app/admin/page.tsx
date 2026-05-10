@@ -31,6 +31,38 @@ const ReactQuill = dynamic(
   { ssr: false }
 );
 
+const modules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    [{ font: [] }],
+    [{ size: ["small", false, "large", "huge"] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ color: [] }, { background: [] }],
+    [{ align: [] }],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["blockquote", "code-block"],
+    ["link", "image"],
+    ["clean"],
+  ],
+};
+
+const formats = [
+  "header",
+  "font",
+  "size",
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "color",
+  "background",
+  "align",
+  "list",
+  "blockquote",
+  "code-block",
+  "link",
+  "image",
+];
 
 export default function AdminPage() {
   const [classId, setClassId] = useState("class2");
@@ -414,6 +446,8 @@ export default function AdminPage() {
               theme="snow"
               value={answer}
               onChange={setAnswer}
+              modules={modules}
+              formats={formats}
               className="bg-white rounded-xl mb-12 min-h-[250px]"
               placeholder="Write formatted answer..."
             />

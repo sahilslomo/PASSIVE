@@ -1,0 +1,93 @@
+.ql-container {
+  min-height: 200px;
+  font-size: 16px;
+}
+
+.ql-editor {
+  min-height: 200px;
+  overflow-y: auto;
+
+  font-family: Inter, sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* FONT CLASSES */
+
+.ql-font-roboto {
+  font-family: 'Roboto', sans-serif;
+}
+
+.ql-font-poppins {
+  font-family: 'Poppins', sans-serif;
+}
+
+.ql-font-mono {
+  font-family: 'Courier New', monospace;
+}
+
+/* TOOLBAR */
+
+.ql-toolbar {
+  border-radius: 16px 16px 0 0;
+}
+
+.ql-container {
+  border-radius: 0 0 16px 16px;
+}
+
+/* HEADINGS */
+
+.ql-editor h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.ql-editor h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.ql-editor h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* BLOCKQUOTE */
+
+.ql-editor blockquote {
+  border-left: 4px solid #000;
+  padding-left: 16px;
+  font-style: italic;
+  margin: 16px 0;
+}
+
+/* CODE BLOCK */
+
+.ql-editor pre {
+  background: #111;
+  color: white;
+  padding: 12px;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+/* LISTS */
+
+.ql-editor ul,
+.ql-editor ol {
+  padding-left: 24px;
+  margin-bottom: 16px;
+}
+
+.ql-editor li {
+  margin-bottom: 8px;
+}

@@ -9,6 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/poppins": "^5.2.7",
+    "@fontsource/roboto": "^5.2.10",
     "@tailwindcss/typography": "^0.5.19",
     "firebase": "^12.13.0",
     "framer-motion": "^12.38.0",
