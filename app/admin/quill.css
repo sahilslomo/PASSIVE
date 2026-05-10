@@ -117,5 +117,12 @@
 /* MOBILE SAFE */
 
 .ql-editor {
-  overflow-wrap: anywhere;
+  min-height: 200px;
+  overflow-y: auto;
+
+  font-family: Inter, sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
+
+  overflow-wrap: break-word;
 }
