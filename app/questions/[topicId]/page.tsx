@@ -456,12 +456,12 @@ export default function QuestionsPage() {
                   className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm"
                 >
 
-                  <div className="flex justify-between gap-3">
+                  <div className="flex justify-between gap-3 min-w-0">
 
                     {/* LEFT */}
 
                     <div
-                      className="flex gap-3 w-full cursor-pointer"
+                      className="flex gap-3 w-full min-w-0 cursor-pointer"
                       onClick={() =>
                         toggleAnswer(
                           id
@@ -479,7 +479,7 @@ export default function QuestionsPage() {
 
                       {/* QUESTION */}
 
-                      <div>
+                      <div className="min-w-0 flex-1">
 
                         <p className="font-semibold text-sm">
                           Question{" "}
@@ -554,39 +554,50 @@ export default function QuestionsPage() {
                       </p>
 
                       <div
-                        className="
-        text-gray-700
-    leading-7
-    whitespace-pre-wrap
-    break-words
-    overflow-hidden
-    max-w-full
-    [&_*]:max-w-full
-    [&_*]:break-words
-    [&_img]:w-full
-    [&_img]:h-auto
-    [&_pre]:overflow-x-auto
-    [&_table]:block
-    [&_table]:overflow-x-auto
-    [&_h1]:text-3xl
-    [&_h1]:font-bold
-    [&_h1]:mb-4
-    [&_h2]:text-2xl
-    [&_h2]:font-semibold
-    [&_h2]:mt-6
-    [&_h2]:mb-3
-    [&_p]:mb-4
-    [&_ul]:list-disc
-    [&_ul]:pl-6
-    [&_ul]:mb-4
-    [&_ol]:list-decimal
-    [&_ol]:pl-6
-    [&_li]:mb-2
-    [&_strong]:font-bold
-    [&_blockquote]:border-l-4
-    [&_blockquote]:pl-4
-    [&_blockquote]:italic
-      "
+                       className="
+
+w-full
+min-w-0                       
+text-gray-700
+leading-7
+whitespace-normal
+max-w-full
+overflow-hidden
+break-words
+
+[&_p]:mb-4
+[&_li]:mb-2
+
+[&_strong]:font-bold
+
+[&_img]:max-w-full
+[&_img]:h-auto
+
+[&_pre]:overflow-x-auto
+
+[&_table]:block
+[&_table]:overflow-x-auto
+
+[&_h1]:text-3xl
+[&_h1]:font-bold
+[&_h1]:mb-4
+
+[&_h2]:text-2xl
+[&_h2]:font-semibold
+[&_h2]:mt-6
+[&_h2]:mb-3
+
+[&_ul]:list-disc
+[&_ul]:pl-6
+[&_ul]:mb-4
+
+[&_ol]:list-decimal
+[&_ol]:pl-6
+
+[&_blockquote]:border-l-4
+[&_blockquote]:pl-4
+[&_blockquote]:italic
+"
                         dangerouslySetInnerHTML={{
                           __html:
                             typeof (q.answer || q.a) === "string" &&

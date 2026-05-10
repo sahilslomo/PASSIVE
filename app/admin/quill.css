@@ -1,6 +1,7 @@
 .ql-container {
   min-height: 200px;
   font-size: 16px;
+  border-radius: 0 0 16px 16px;
 }
 
 .ql-editor {
@@ -10,25 +11,34 @@
   font-family: Inter, sans-serif;
   font-size: 16px;
   line-height: 1.8;
+
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
-.ql-editor img {
+/* IMAGES / MEDIA */
+
+.ql-editor img,
+.ql-editor video,
+.ql-editor iframe {
   max-width: 100%;
   height: auto;
+  display: block;
 }
 
 /* FONT CLASSES */
 
 .ql-font-roboto {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 
 .ql-font-poppins {
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
 .ql-font-mono {
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 }
 
 /* TOOLBAR */
@@ -37,28 +47,33 @@
   border-radius: 16px 16px 0 0;
 }
 
-.ql-container {
-  border-radius: 0 0 16px 16px;
-}
-
 /* HEADINGS */
 
 .ql-editor h1 {
   font-size: 32px;
   font-weight: 700;
   margin-bottom: 16px;
+  line-height: 1.3;
 }
 
 .ql-editor h2 {
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 12px;
+  line-height: 1.4;
 }
 
 .ql-editor h3 {
   font-size: 20px;
   font-weight: 600;
   margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+/* PARAGRAPHS */
+
+.ql-editor p {
+  margin-bottom: 16px;
 }
 
 /* BLOCKQUOTE */
@@ -78,6 +93,11 @@
   padding: 12px;
   border-radius: 12px;
   overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.ql-editor code {
+  overflow-wrap: break-word;
 }
 
 /* LISTS */
@@ -92,37 +112,76 @@
   margin-bottom: 8px;
 }
 
-/* PREVENT OVERFLOW */
+/* TABLES */
 
-.ql-editor img,
-.ql-editor video,
-.ql-editor iframe,
-.ql-editor pre,
-.ql-editor code {
-  max-width: 100%;
+.ql-editor table {
+  display: block;
   overflow-x: auto;
+  max-width: 100%;
 }
 
-/* FIX LONG WORD BREAKING */
+/* SAFE TEXT WRAPPING */
 
 .ql-editor p,
 .ql-editor li,
 .ql-editor h1,
 .ql-editor h2,
-.ql-editor h3 {
-  word-break: break-word;
-  overflow-wrap: break-word;
+.ql-editor h3,
+.ql-editor span,
+.ql-editor strong,
+.ql-editor em,
+.ql-editor blockquote {
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
 }
 
-/* MOBILE SAFE */
+/* PREVENT LONG CONTENT BREAKING MOBILE */
 
-.ql-editor {
-  min-height: 200px;
-  overflow-y: auto;
-
-  font-family: Inter, sans-serif;
-  font-size: 16px;
-  line-height: 1.8;
-
-  overflow-wrap: break-word;
+.ql-editor * {
+  max-width: 100%;
+  box-sizing: border-box;
 }
+
+/* PREVENT LONG CONTENT BREAKING MOBILE */
+
+.ql-editor * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* FINAL MOBILE/FLEX FIX */
+
+.ql-editor,
+.ql-editor * {
+  min-width: 0;
+}
+
+.ql-editor p,
+.ql-editor li,
+.ql-editor blockquote,
+.ql-editor span,
+.ql-editor strong,
+.ql-editor em {
+  max-width: 100%;
+}
+
+/* FINAL TEXT WRAP FIX */
+
+.ql-editor span,
+.ql-editor em,
+.ql-editor strong {
+  white-space: normal !important;
+}
+
+.ql-editor p,
+.ql-editor li,
+.ql-editor blockquote {
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+.ql-editor * {
+  min-width: 0 !important;
+}
+

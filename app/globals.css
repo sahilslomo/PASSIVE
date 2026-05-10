@@ -24,7 +24,8 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
- /* =========================
+
+/* =========================
    NAVIK LOADER ANIMATIONS
 ========================= */
 
@@ -45,7 +46,7 @@ body {
 @keyframes waveMove1 {
   0% {
     transform: translateX(0px);
-      }
+  }
 
   50% {
     transform: translateX(10px);
@@ -68,7 +69,7 @@ body {
   100% {
     transform: translateX(0px);
   }
-  }
+}
 
 .animate-float {
   animation: floatShip 2.5s ease-in-out infinite;
@@ -80,4 +81,35 @@ body {
 
 .animate-wave2 {
   animation: waveMove2 4s ease-in-out infinite;
+}
+
+/* =========================
+   QUILL MOBILE WRAP FIX
+========================= */
+
+.ql-editor,
+.ql-editor * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ql-editor p,
+.ql-editor span,
+.ql-editor em,
+.ql-editor strong,
+.ql-editor li,
+.ql-editor blockquote {
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+.ql-editor span {
+  display: inline !important;
+}
+
+.ql-editor p,
+.ql-editor li,
+.ql-editor blockquote {
+  width: 100%;
 }

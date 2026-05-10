@@ -578,7 +578,7 @@ export default function AdminPage() {
                       >
                         <div className="flex justify-between gap-3">
 
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0 overflow-hidden">
 
                             <p className="font-medium">
                               Q. {q.q}
@@ -586,11 +586,14 @@ export default function AdminPage() {
 
                             <div
                               className="
-    text-sm
+     text-sm
     text-gray-700
     mt-2
     leading-7
-    break-words overflow-hidden
+    break-words
+    overflow-hidden
+    min-w-0
+    max-w-full
     [&_h1]:text-3xl
     [&_h1]:font-bold
     [&_h1]:mb-4
@@ -622,8 +625,27 @@ export default function AdminPage() {
                                       q.a.includes("<div")
                                     )
                                     ? q.a
+                                      .replace(/&nbsp;/g, " ")
+                                      .replace(
+                                        /style="([^"]*)"/g,
+                                        (match, styles) => {
+                                          const cleaned = styles
+                                            .replace(
+                                              /white-space\s*:\s*nowrap;?/gi,
+                                              ""
+                                            )
+                                            .replace(
+                                              /display\s*:\s*inline-block;?/gi,
+                                              ""
+                                            );
+
+                                          return `style="${cleaned}"`;
+                                        }
+                                      )
+
                                     : q.a
-                                      ?.replace(/\n/g, "<br/>"),
+                                      ?.replace(/\n/g, "<br/>")
+                                      .replace(/&nbsp;/g, " "),
                               }}
                             />
 
