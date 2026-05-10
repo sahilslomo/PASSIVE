@@ -586,29 +586,38 @@ export default function AdminPage() {
 
                             <div
                               className="
-     text-sm
+    text-sm
     text-gray-700
     mt-2
     leading-7
-    break-words
+    whitespace-normal
+    overflow-wrap-anywhere
     overflow-hidden
     min-w-0
     max-w-full
+
     [&_h1]:text-3xl
     [&_h1]:font-bold
     [&_h1]:mb-4
+
     [&_h2]:text-2xl
     [&_h2]:font-semibold
     [&_h2]:mt-6
     [&_h2]:mb-3
+
     [&_p]:mb-4
+
     [&_ul]:list-disc
     [&_ul]:pl-6
     [&_ul]:mb-4
+
     [&_ol]:list-decimal
     [&_ol]:pl-6
+
     [&_li]:mb-2
+
     [&_strong]:font-bold
+
     [&_blockquote]:border-l-4
     [&_blockquote]:pl-4
     [&_blockquote]:italic
@@ -624,28 +633,9 @@ export default function AdminPage() {
                                       q.a.includes("<h1") ||
                                       q.a.includes("<div")
                                     )
-                                    ? q.a
-                                      .replace(/&nbsp;/g, " ")
-                                      .replace(
-                                        /style="([^"]*)"/g,
-                                        (match, styles) => {
-                                          const cleaned = styles
-                                            .replace(
-                                              /white-space\s*:\s*nowrap;?/gi,
-                                              ""
-                                            )
-                                            .replace(
-                                              /display\s*:\s*inline-block;?/gi,
-                                              ""
-                                            );
-
-                                          return `style="${cleaned}"`;
-                                        }
-                                      )
-
+                                    ? q.a.replace(/&nbsp;/g, " ")
                                     : q.a
-                                      ?.replace(/\n/g, "<br/>")
-                                      .replace(/&nbsp;/g, " "),
+                                      ?.replace(/\n/g, "<br/>"),
                               }}
                             />
 
