@@ -1,5 +1,6 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -45,6 +46,9 @@ export default function QuestionsPage() {
   const [questions, setQuestions] =
     useState<Question[]>([]);
 
+  const [revision, setRevision] = useState("");
+  const [loadingRevision, setLoadingRevision] = useState(false);
+
   const [loading, setLoading] =
     useState(true);
 
@@ -79,6 +83,32 @@ export default function QuestionsPage() {
     "KOCHI",
     "KOLKATA",
   ];
+
+  const handleReviseAI = async () => {
+    try {
+      setLoadingRevision(true);
+
+      const response = await fetch("/api/revise", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          questions,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setRevision(data.revision);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingRevision(false);
+    }
+  };
 
   /* =========================
      BOOKMARKS
@@ -495,6 +525,30 @@ export default function QuestionsPage() {
             )}
 
         </div>
+
+      </div>
+
+
+      {/* ================= REVISE AI ================= */}
+
+      <div className="max-w-md mx-auto px-5 mt-6">
+
+        <button
+          onClick={handleReviseAI}
+          className="w-full bg-black text-white py-3 rounded-2xl font-medium text-sm shadow-sm"
+        >
+          {loadingRevision
+            ? "Generating Revision..."
+            : "✨ Revise with AI"}
+        </button>
+
+        {revision && (
+          <div className="mt-4 bg-white border border-gray-200 rounded-3xl p-5 whitespace-pre-wrap leading-7">
+            <ReactMarkdown>
+              {revision}
+            </ReactMarkdown>
+          </div>
+        )}
 
       </div>
 
