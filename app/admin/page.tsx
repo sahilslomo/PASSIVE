@@ -20,6 +20,9 @@ import {
   Pencil,
 } from "lucide-react";
 
+import dynamic from "next/dynamic";
+import "react-quill-new/dist/quill.snow.css";
+
 export default function AdminPage() {
   const [classId, setClassId] = useState("class2");
 
@@ -44,6 +47,11 @@ export default function AdminPage() {
 
   const [editTopicId, setEditTopicId] =
     useState<string | null>(null);
+
+  const ReactQuill = dynamic(
+    () => import("react-quill-new"),
+    { ssr: false }
+  );
 
   /* =========================
      LABEL SYSTEM
@@ -330,13 +338,20 @@ export default function AdminPage() {
               className="w-full border p-3 rounded-xl"
             />
 
-            <textarea
-              value={topicDesc}
-              onChange={(e) =>
-                setTopicDesc(e.target.value)
-              }
-              placeholder="Description"
-              className="w-full border p-3 rounded-xl"
+            <ReactQuill
+              theme="snow"
+              value={answer}
+              onChange={setAnswer}
+              className="bg-white rounded-xl h-64 mb-12"
+              modules={{
+                toolbar: [
+                  [{ header: [1, 2, false] }],
+                  ["bold", "italic", "underline"],
+                  [{ list: "ordered" }, { list: "bullet" }],
+                  ["link", "image"],
+                  ["clean"],
+                ],
+              }}
             />
 
             <button
@@ -395,14 +410,15 @@ export default function AdminPage() {
             className="w-full border p-3 rounded-xl mb-3"
           />
 
-          <textarea
-            value={answer}
-            onChange={(e) =>
-              setAnswer(e.target.value)
-            }
-            placeholder="Answer"
-            className="w-full border p-3 rounded-xl mb-3"
-          />
+          <div className="mb-3">
+            <ReactQuill
+              theme="snow"
+              value={answer}
+              onChange={setAnswer}
+              className="bg-white rounded-xl"
+              placeholder="Write formatted answer..."
+            />
+          </div>
 
           {/* LABELS */}
 
@@ -414,11 +430,10 @@ export default function AdminPage() {
                 onClick={() =>
                   toggleLabel(l)
                 }
-                className={`px-3 py-1 rounded-full border text-sm ${
-                  labels.includes(l)
-                    ? "bg-black text-white"
-                    : "bg-white"
-                }`}
+                className={`px-3 py-1 rounded-full border text-sm ${labels.includes(l)
+                  ? "bg-black text-white"
+                  : "bg-white"
+                  }`}
               >
                 {l}
               </button>
@@ -536,30 +551,54 @@ export default function AdminPage() {
                               Q. {q.q}
                             </p>
 
-                            <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">
-                              {q.a}
-                            </p>
+                            <div
+                              className="
+    text-sm
+    text-gray-700
+    mt-2
+    leading-7
+    [&_h1]:text-3xl
+    [&_h1]:font-bold
+    [&_h1]:mb-4
+    [&_h2]:text-2xl
+    [&_h2]:font-semibold
+    [&_h2]:mt-6
+    [&_h2]:mb-3
+    [&_p]:mb-4
+    [&_ul]:list-disc
+    [&_ul]:pl-6
+    [&_ul]:mb-4
+    [&_ol]:list-decimal
+    [&_ol]:pl-6
+    [&_li]:mb-2
+    [&_strong]:font-bold
+    [&_blockquote]:border-l-4
+    [&_blockquote]:pl-4
+    [&_blockquote]:italic
+  "
+                              dangerouslySetInnerHTML={{ __html: q.a }}
+                            />
 
                             {q.labels?.length >
                               0 && (
-                              <div className="flex flex-wrap gap-2 mt-3">
+                                <div className="flex flex-wrap gap-2 mt-3">
 
-                                {q.labels.map(
-                                  (
-                                    l: any,
-                                    i: number
-                                  ) => (
-                                    <span
-                                      key={i}
-                                      className="text-xs bg-black text-white px-2 py-1 rounded-full"
-                                    >
-                                      {l.value}
-                                    </span>
-                                  )
-                                )}
+                                  {q.labels.map(
+                                    (
+                                      l: any,
+                                      i: number
+                                    ) => (
+                                      <span
+                                        key={i}
+                                        className="text-xs bg-black text-white px-2 py-1 rounded-full"
+                                      >
+                                        {l.value}
+                                      </span>
+                                    )
+                                  )}
 
-                              </div>
-                            )}
+                                </div>
+                              )}
 
                           </div>
 
