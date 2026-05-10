@@ -482,15 +482,15 @@ export default function HomePage() {
               {/* USER */}
 
               {user ? (
-                <div className="flex items-center gap-2 max-w-full">
+                <div className="flex items-center gap-2 flex-shrink-0">
 
-                  <div className="bg-gray-100 px-4 py-2 rounded-2xl max-w-[140px] min-w-0">
+                  <div className="bg-gray-100 px-4 py-2 rounded-2xl max-w-[110px] min-w-0">
 
                     <p className="text-xs text-gray-500">
                       Signed in
                     </p>
 
-                    <p className="text-sm font-medium truncate max-w-[90px]">
+                    <p className="text-sm font-medium truncate max-w-[65px]">
                       {user.email}
                     </p>
 
