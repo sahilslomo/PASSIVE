@@ -638,8 +638,8 @@ export default function QuestionsPage() {
           className="w-full bg-black text-white py-3 rounded-2xl font-medium text-sm shadow-sm"
         >
           {loadingRevision
-            ? "Generating Revision..."
-            : "✨ Revise with AI"}
+            ? `Generating ${topicName} Revision...`
+            : `✨ Revise ${topicName}`}
         </button>
 
         {revision && (
