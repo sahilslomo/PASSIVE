@@ -46,6 +46,8 @@ export default function QuestionsPage() {
   const [questions, setQuestions] =
     useState<Question[]>([]);
 
+  const [transcript, setTranscript] = useState("");
+
   const [revision, setRevision] = useState("");
   const [loadingRevision, setLoadingRevision] = useState(false);
 
@@ -161,6 +163,29 @@ export default function QuestionsPage() {
             );
 
         setQuestions(questionData);
+
+        /* TOPIC CONTEXT */
+
+        const contextSnapshot =
+          await getDocs(
+            collection(db, "topicContext")
+          );
+
+        const contextDoc =
+          contextSnapshot.docs.find(
+            (doc) =>
+              (doc.data() as any).topicId ===
+              topicId
+          );
+
+        if (contextDoc) {
+          const data =
+            contextDoc.data() as any;
+
+          setTranscript(
+            data.transcript || ""
+          );
+        }
 
         /* TOPIC */
 
