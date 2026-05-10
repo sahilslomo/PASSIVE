@@ -439,7 +439,7 @@ export default function HomePage() {
 
   return (
     <>
-      <main className="min-h-screen bg-[#f5f5f5] text-black pb-28">
+      <main className="min-h-screen bg-[#f5f5f5] text-black pb-[120px]">
 
         <div className="max-w-md mx-auto px-5 pt-5">
 
@@ -704,7 +704,7 @@ export default function HomePage() {
             BOTTOM NAV
         ======================== */}
 
-        <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-sm">
+        <nav className="fixed bottom-0 left-0 z-50 w-full bg-white border-t border-gray-200 shadow-sm">
 
           <div className="max-w-md mx-auto flex items-center justify-around py-3">
 
