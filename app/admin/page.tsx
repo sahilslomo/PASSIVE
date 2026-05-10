@@ -309,7 +309,7 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-screen bg-[#f5f5f5] p-5">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto w-full overflow-x-hidden">
 
         <h1 className="text-3xl font-bold mb-8">
           NAVIK Admin
@@ -574,7 +574,7 @@ export default function AdminPage() {
                     .map((q) => (
                       <div
                         key={q.id}
-                        className="border rounded-xl p-3 bg-gray-50"
+                        className="border rounded-xl p-3 bg-gray-50 overflow-hidden"
                       >
                         <div className="flex justify-between gap-3">
 
@@ -590,6 +590,7 @@ export default function AdminPage() {
     text-gray-700
     mt-2
     leading-7
+    break-words overflow-hidden
     [&_h1]:text-3xl
     [&_h1]:font-bold
     [&_h1]:mb-4
@@ -608,7 +609,6 @@ export default function AdminPage() {
     [&_blockquote]:border-l-4
     [&_blockquote]:pl-4
     [&_blockquote]:italic
-    whitespace-pre-wrap
   "
                               dangerouslySetInnerHTML={{
                                 __html:

@@ -91,3 +91,31 @@
 .ql-editor li {
   margin-bottom: 8px;
 }
+
+/* PREVENT OVERFLOW */
+
+.ql-editor img,
+.ql-editor video,
+.ql-editor iframe,
+.ql-editor pre,
+.ql-editor code {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* FIX LONG WORD BREAKING */
+
+.ql-editor p,
+.ql-editor li,
+.ql-editor h1,
+.ql-editor h2,
+.ql-editor h3 {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* MOBILE SAFE */
+
+.ql-editor {
+  overflow-wrap: anywhere;
+}
