@@ -527,87 +527,6 @@ export default function HomePage() {
 
           </div>
 
-          {/* =========================
-              LIVE STATS
-          ========================= */}
-
-          <div className="mb-6 overflow-hidden">
-
-            <div className="relative h-[92px] overflow-hidden">
-
-              {stats.map(
-                (item, index) => (
-                  <div
-                    key={index}
-                    className={`absolute inset-0 transition-all duration-500 ease-out ${activeStat === index
-                      ? "opacity-100 translate-y-0 blur-0 scale-100 z-10"
-                      : "opacity-0 translate-y-2 blur-sm scale-[0.98] pointer-events-none z-0"
-                      }`}
-                  >
-
-                    <div className="bg-white border border-gray-200 rounded-3xl px-5 py-4 flex items-center justify-between shadow-sm">
-
-                      <div className="flex items-center gap-4">
-
-                        <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-black">
-
-                          {item.icon}
-
-                        </div>
-
-                        <div className="h-[44px] flex flex-col justify-center">
-
-                          <p className="text-[22px] font-bold text-black leading-none">
-                            {item.value}
-                          </p>
-
-                          <div className="flex items-center gap-2 mt-1">
-
-                            {activeStat === 0 && (
-                              <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.9)] animate-pulse" />
-                            )}
-
-                            <p className="text-sm text-gray-600">
-                              {item.text}
-                            </p>
-
-                          </div>
-
-                        </div>
-
-                      </div>
-
-                      <div className="flex gap-1.5">
-
-                        {stats.map(
-                          (
-                            _,
-                            dotIndex
-                          ) => (
-                            <div
-                              key={
-                                dotIndex
-                              }
-                              className={`w-2 h-2 rounded-full transition-all ${activeStat ===
-                                dotIndex
-                                ? "bg-black"
-                                : "bg-gray-300"
-                                }`}
-                            />
-                          )
-                        )}
-
-                      </div>
-
-                    </div>
-
-                  </div>
-                )
-              )}
-
-            </div>
-
-          </div>
 
           {/* =========================
               CLASS SELECTOR
@@ -694,11 +613,96 @@ export default function HomePage() {
 
           </div>
 
+          {/* =========================
+              LIVE STATS
+          ========================= */}
+
+          <div className="mt-8 overflow-hidden">
+
+            <div className="relative h-[92px] overflow-hidden">
+
+              {stats.map(
+                (item, index) => (
+                  <div
+                    key={index}
+                    className={`absolute inset-0 transition-all duration-500 ease-out ${activeStat === index
+                      ? "opacity-100 translate-y-0 blur-0 scale-100 z-10"
+                      : "opacity-0 translate-y-2 blur-sm scale-[0.98] pointer-events-none z-0"
+                      }`}
+                  >
+
+                    <div className="bg-white border border-gray-200 rounded-3xl px-5 py-4 flex items-center justify-between shadow-sm">
+
+                      <div className="flex items-center gap-4">
+
+                        <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-black">
+
+                          {item.icon}
+
+                        </div>
+
+                        <div className="h-[44px] flex flex-col justify-center">
+
+                          <p className="text-[22px] font-bold text-black leading-none">
+                            {item.value}
+                          </p>
+
+                          <div className="flex items-center gap-2 mt-1">
+
+                            {activeStat === 0 && (
+                              <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.9)] animate-pulse" />
+                            )}
+
+                            <p className="text-sm text-gray-600">
+                              {item.text}
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                      <div className="flex gap-1.5">
+
+                        {stats.map(
+                          (
+                            _,
+                            dotIndex
+                          ) => (
+                            <div
+                              key={
+                                dotIndex
+                              }
+                              className={`w-2 h-2 rounded-full transition-all ${activeStat ===
+                                dotIndex
+                                ? "bg-black"
+                                : "bg-gray-300"
+                                }`}
+                            />
+                          )
+                        )}
+
+                      </div>
+
+                    </div>
+
+                  </div>
+                )
+              )}
+
+            </div>
+
+          </div>
+
+
+
         </div>
+
 
         {/* =========================
             BOTTOM NAV
-        ========================= */}
+        ======================== */}
 
         <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-sm">
 
