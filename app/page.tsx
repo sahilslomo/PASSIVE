@@ -78,7 +78,7 @@ export default function HomePage() {
         />
       ),
       value: "0",
-      text: "users online right now",
+      text: "users online",
     },
     {
       icon: (
@@ -88,7 +88,7 @@ export default function HomePage() {
         />
       ),
       value: "0",
-      text: "topics viewed in the last hour",
+      text: "topics viewed",
     },
     {
       icon: (
@@ -98,7 +98,7 @@ export default function HomePage() {
         />
       ),
       value: "0",
-      text: "questions viewed in the last hour",
+      text: "questions viewed",
     },
   ]);
 
@@ -161,7 +161,7 @@ export default function HomePage() {
             value: String(
               data.usersOnline || 0
             ),
-            text: "users online right now",
+            text: "users online",
           },
           {
             icon: (
@@ -174,7 +174,7 @@ export default function HomePage() {
               data.topicsViewedHour || 0
             ),
             text:
-              "topics viewed in the last hour",
+              "topics viewed",
           },
           {
             icon: (
@@ -187,7 +187,7 @@ export default function HomePage() {
               data.questionsViewedHour || 0
             ),
             text:
-              "questions viewed in the last hour",
+              "questions viewed",
           },
         ]);
       }
@@ -492,8 +492,8 @@ export default function HomePage() {
                   <div
                     key={index}
                     className={`absolute inset-0 transition-all duration-500 ease-out ${activeStat === index
-                        ? "opacity-100 translate-y-0 blur-0 scale-100 z-10"
-                        : "opacity-0 translate-y-2 blur-sm scale-[0.98] pointer-events-none z-0"
+                      ? "opacity-100 translate-y-0 blur-0 scale-100 z-10"
+                      : "opacity-0 translate-y-2 blur-sm scale-[0.98] pointer-events-none z-0"
                       }`}
                   >
 
@@ -507,7 +507,7 @@ export default function HomePage() {
 
                         </div>
 
-                        <div>
+                        <div className="h-[44px] flex flex-col justify-center">
 
                           <p className="text-[22px] font-bold text-black leading-none">
                             {item.value}
