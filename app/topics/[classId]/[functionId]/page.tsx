@@ -128,27 +128,27 @@ export default function TopicsPage() {
   ========================= */
 
   const filteredTopics = topics
-  .filter((topic: any) => {
+    .filter((topic: any) => {
 
-    const title =
-      topic.title?.toLowerCase() ||
-      "";
+      const title =
+        topic.title?.toLowerCase() ||
+        "";
 
-    const description =
-      topic.description?.toLowerCase() ||
-      "";
+      const description =
+        topic.description?.toLowerCase() ||
+        "";
 
-    const search =
-      searchText.toLowerCase();
+      const search =
+        searchText.toLowerCase();
 
-    return (
-      title.includes(search) ||
-      description.includes(search)
+      return (
+        title.includes(search) ||
+        description.includes(search)
+      );
+    })
+    .sort((a: any, b: any) =>
+      a.title.localeCompare(b.title)
     );
-  })
-  .sort((a: any, b: any) =>
-    a.title.localeCompare(b.title)
-  );
 
   /* =========================
      LOADER
@@ -312,11 +312,12 @@ export default function TopicsPage() {
                         {topic.title}
                       </h3>
 
-                      <p className="text-sm text-gray-500 mt-2 italic leading-8 tracking-wide">
-                        {
-                          topic.description
-                        }
-                      </p>
+                      <div
+                        className="text-sm text-gray-500 mt-2 italic whitespace-pre-line [&_navik]:font-bold [&_navik]:text-cyan-600"
+                        dangerouslySetInnerHTML={{
+                          __html: topic.description || "",
+                        }}
+                      />
 
                     </div>
 

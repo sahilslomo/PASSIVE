@@ -342,6 +342,17 @@ export default function AdminPage() {
               className="w-full border p-3 rounded-xl"
             />
 
+            <textarea
+              value={topicDesc}
+              onChange={(e) =>
+                setTopicDesc(e.target.value)
+              }
+              placeholder="Topic description"
+              className="w-full border p-3 rounded-xl min-h-[120px]"
+            />
+
+
+
             <button
               onClick={handleAddTopic}
               className="w-full bg-black text-white p-3 rounded-xl"
