@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { useRouter } from "next/navigation";
 
 import {
@@ -13,6 +14,9 @@ import {
   X,
   Mail,
   LogOut,
+  Users,
+  BookOpen,
+  MessageCircleMore,
 } from "lucide-react";
 
 import {
@@ -24,7 +28,15 @@ import {
   signOut,
 } from "firebase/auth";
 
-import { auth } from "@/lib/firebase";
+import {
+  doc,
+  onSnapshot,
+  updateDoc,
+  increment,
+  setDoc,
+} from "firebase/firestore";
+
+import { auth, db } from "@/lib/firebase";
 
 export default function HomePage() {
   const router = useRouter();
@@ -33,34 +45,172 @@ export default function HomePage() {
      STATES
   ========================= */
 
-  const [showAuth, setShowAuth] = useState(false);
+  const [showAuth, setShowAuth] =
+    useState(false);
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
-  const [isSignup, setIsSignup] = useState(false);
+  const [password, setPassword] =
+    useState("");
 
-  const [user, setUser] = useState<any>(null);
+  const [isSignup, setIsSignup] =
+    useState(false);
 
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(
+    null
+  );
+
+  const [loading, setLoading] =
+    useState(false);
 
   const [selectedClass, setSelectedClass] =
     useState("class2");
+
+  const [activeStat, setActiveStat] =
+    useState(0);
+
+  const [stats, setStats] = useState([
+    {
+      icon: (
+        <Users
+          size={22}
+          strokeWidth={2.2}
+        />
+      ),
+      value: "0",
+      text: "users online right now",
+    },
+    {
+      icon: (
+        <BookOpen
+          size={22}
+          strokeWidth={2.2}
+        />
+      ),
+      value: "0",
+      text: "topics viewed in the last hour",
+    },
+    {
+      icon: (
+        <MessageCircleMore
+          size={22}
+          strokeWidth={2.2}
+        />
+      ),
+      value: "0",
+      text: "questions viewed in the last hour",
+    },
+  ]);
 
   /* =========================
      AUTH STATE
   ========================= */
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (currentUser) => {
-        setUser(currentUser);
-      }
-    );
+    const unsubscribe =
+      onAuthStateChanged(
+        auth,
+        async (currentUser) => {
+          setUser(currentUser);
+
+          if (currentUser) {
+            try {
+              await updateDoc(
+                doc(db, "analytics", "live"),
+                {
+                  usersOnline: increment(1),
+                }
+              );
+            } catch {
+              await setDoc(
+                doc(db, "analytics", "live"),
+                {
+                  usersOnline: 1,
+                  topicsViewedHour: 0,
+                  questionsViewedHour: 0,
+                }
+              );
+            }
+          }
+        }
+      );
 
     return () => unsubscribe();
   }, []);
+
+  /* =========================
+     LIVE ANALYTICS
+  ========================= */
+
+  useEffect(() => {
+    const unsub = onSnapshot(
+      doc(db, "analytics", "live"),
+      (snapshot) => {
+        const data = snapshot.data();
+
+        if (!data) return;
+
+        setStats([
+          {
+            icon: (
+              <Users
+                size={22}
+                strokeWidth={2.2}
+              />
+            ),
+            value: String(
+              data.usersOnline || 0
+            ),
+            text: "users online right now",
+          },
+          {
+            icon: (
+              <BookOpen
+                size={22}
+                strokeWidth={2.2}
+              />
+            ),
+            value: String(
+              data.topicsViewedHour || 0
+            ),
+            text:
+              "topics viewed in the last hour",
+          },
+          {
+            icon: (
+              <MessageCircleMore
+                size={22}
+                strokeWidth={2.2}
+              />
+            ),
+            value: String(
+              data.questionsViewedHour || 0
+            ),
+            text:
+              "questions viewed in the last hour",
+          },
+        ]);
+      }
+    );
+
+    return () => unsub();
+  }, []);
+
+  /* =========================
+     AUTO SLIDER
+  ========================= */
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStat((prev) =>
+        prev === stats.length - 1
+          ? 0
+          : prev + 1
+      );
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [stats.length]);
 
   /* =========================
      FUNCTIONS DATA
@@ -80,7 +230,8 @@ export default function HomePage() {
     {
       code: "FN5",
       title: "ELECTRICAL",
-      desc: "EARTH FAULT, ICCP, ETC",
+      desc:
+        "EARTH FAULT, ICCP, ETC",
     },
     {
       code: "FN6",
@@ -93,88 +244,150 @@ export default function HomePage() {
      GOOGLE LOGIN
   ========================= */
 
-  const handleGoogleLogin = async () => {
-    try {
-      setLoading(true);
+  const handleGoogleLogin =
+    async () => {
+      try {
+        setLoading(true);
 
-      const provider = new GoogleAuthProvider();
+        const provider =
+          new GoogleAuthProvider();
 
-      await signInWithPopup(auth, provider);
+        await signInWithPopup(
+          auth,
+          provider
+        );
 
-      setShowAuth(false);
+        setShowAuth(false);
 
-    } catch (error) {
-      console.error(error);
-      alert("Google Login Failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+      } catch (error) {
+        console.error(error);
+
+        alert(
+          "Google Login Failed"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
   /* =========================
      EMAIL AUTH
   ========================= */
 
-  const handleEmailAuth = async () => {
-    if (!email || !password) {
-      alert("Please fill all fields");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      if (isSignup) {
-        await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-      } else {
-        await signInWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-      }
-
-      setShowAuth(false);
-
-      setEmail("");
-      setPassword("");
-
-    } catch (error: any) {
-      console.error(error);
-
-      if (
-        error.code === "auth/email-already-in-use"
-      ) {
-        alert("Email already registered");
-      } else if (
-        error.code === "auth/invalid-credential"
-      ) {
-        alert("Invalid email or password");
-      } else if (
-        error.code === "auth/weak-password"
-      ) {
+  const handleEmailAuth =
+    async () => {
+      if (!email || !password) {
         alert(
-          "Password should be at least 6 characters"
+          "Please fill all fields"
         );
-      } else {
-        alert("Authentication Failed");
+        return;
       }
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      try {
+        setLoading(true);
+
+        if (isSignup) {
+          await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+        } else {
+          await signInWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+        }
+
+        setShowAuth(false);
+
+        setEmail("");
+
+        setPassword("");
+
+      } catch (error: any) {
+        console.error(error);
+
+        if (
+          error.code ===
+          "auth/email-already-in-use"
+        ) {
+          alert(
+            "Email already registered"
+          );
+        } else if (
+          error.code ===
+          "auth/invalid-credential"
+        ) {
+          alert(
+            "Invalid email or password"
+          );
+        } else if (
+          error.code ===
+          "auth/weak-password"
+        ) {
+          alert(
+            "Password should be at least 6 characters"
+          );
+        } else {
+          alert(
+            "Authentication Failed"
+          );
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
 
   /* =========================
      LOGOUT
   ========================= */
 
-  const handleLogout = async () => {
-    await signOut(auth);
-  };
+  const handleLogout =
+    async () => {
+      try {
+        await updateDoc(
+          doc(db, "analytics", "live"),
+          {
+            usersOnline:
+              increment(-1),
+          }
+        );
+      } catch (error) {
+        console.error(error);
+      }
+
+      await signOut(auth);
+    };
+
+  /* =========================
+     FUNCTION CLICK
+  ========================= */
+
+  const handleFunctionClick =
+    async (code: string) => {
+      if (!user) {
+        setShowAuth(true);
+        return;
+      }
+
+      try {
+        await updateDoc(
+          doc(db, "analytics", "live"),
+          {
+            topicsViewedHour:
+              increment(1),
+          }
+        );
+      } catch (error) {
+        console.error(error);
+      }
+
+      router.push(
+        `/topics/${selectedClass}/${code.toLowerCase()}`
+      );
+    };
 
   return (
     <>
@@ -186,22 +399,26 @@ export default function HomePage() {
               HEADER
           ========================= */}
 
-          <div className="bg-white border border-gray-200 rounded-3xl p-4 mb-8 shadow-sm">
+          <div className="bg-white border border-gray-200 rounded-3xl p-4 mb-5 shadow-sm">
 
             <div className="flex items-center justify-between">
 
               {/* LOGO */}
+
               <div className="flex items-center gap-3">
 
                 <div className="w-14 h-14 flex items-center justify-center rotate-[-8deg]">
+
                   <Sailboat
                     size={34}
                     strokeWidth={2}
                     className="text-black"
                   />
+
                 </div>
 
                 <div>
+
                   <h1 className="text-2xl font-bold tracking-tight">
                     NAVIK
                   </h1>
@@ -209,52 +426,153 @@ export default function HomePage() {
                   <p className="text-sm text-gray-500">
                     Sail towards CoC
                   </p>
+
                 </div>
+
               </div>
 
-              {/* LOGIN / USER */}
+              {/* USER */}
+
               {user ? (
                 <div className="flex items-center gap-2 max-w-full">
 
                   <div className="bg-gray-100 px-4 py-2 rounded-2xl max-w-[140px] min-w-0">
-                    <p className="text-xs text-gray-500">Signed in</p>
 
-                    <p className="text-sm font-medium truncate max-w-[60px]">
+                    <p className="text-xs text-gray-500">
+                      Signed in
+                    </p>
+
+                    <p className="text-sm font-medium truncate max-w-[90px]">
                       {user.email}
                     </p>
+
                   </div>
 
                   <button
-                    onClick={handleLogout}
-                    className="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center flex-shrink-0"
+                    onClick={
+                      handleLogout
+                    }
+                    className="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center"
                   >
+
                     <LogOut size={18} />
+
                   </button>
 
                 </div>
               ) : (
                 <button
-                  onClick={() => setShowAuth(true)}
+                  onClick={() =>
+                    setShowAuth(true)
+                  }
                   className="bg-black text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium"
                 >
+
                   <User size={16} />
+
                   Login
+
                 </button>
               )}
 
             </div>
+
+          </div>
+
+          {/* =========================
+              LIVE STATS
+          ========================= */}
+
+          <div className="mb-6 overflow-hidden">
+
+            <div className="relative h-[92px] overflow-hidden">
+
+              {stats.map(
+                (item, index) => (
+                  <div
+                    key={index}
+                    className={`absolute inset-0 transition-all duration-500 ease-out ${activeStat === index
+                        ? "opacity-100 translate-y-0 blur-0 scale-100 z-10"
+                        : "opacity-0 translate-y-2 blur-sm scale-[0.98] pointer-events-none z-0"
+                      }`}
+                  >
+
+                    <div className="bg-white border border-gray-200 rounded-3xl px-5 py-4 flex items-center justify-between shadow-sm">
+
+                      <div className="flex items-center gap-4">
+
+                        <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-black">
+
+                          {item.icon}
+
+                        </div>
+
+                        <div>
+
+                          <p className="text-[22px] font-bold text-black leading-none">
+                            {item.value}
+                          </p>
+
+                          <div className="flex items-center gap-2 mt-1">
+
+                            {activeStat === 0 && (
+                              <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.9)] animate-pulse" />
+                            )}
+
+                            <p className="text-sm text-gray-600">
+                              {item.text}
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                      <div className="flex gap-1.5">
+
+                        {stats.map(
+                          (
+                            _,
+                            dotIndex
+                          ) => (
+                            <div
+                              key={
+                                dotIndex
+                              }
+                              className={`w-2 h-2 rounded-full transition-all ${activeStat ===
+                                dotIndex
+                                ? "bg-black"
+                                : "bg-gray-300"
+                                }`}
+                            />
+                          )
+                        )}
+
+                      </div>
+
+                    </div>
+
+                  </div>
+                )
+              )}
+
+            </div>
+
           </div>
 
           {/* =========================
               CLASS SELECTOR
           ========================= */}
 
-          <div className="mb-10">
+          <div className="mb-8">
 
             <select
               value={selectedClass}
               onChange={(e) =>
-                setSelectedClass(e.target.value)
+                setSelectedClass(
+                  e.target.value
+                )
               }
               className="w-full bg-white border border-gray-300 rounded-2xl px-4 py-4 text-[16px] outline-none shadow-sm"
             >
@@ -277,61 +595,57 @@ export default function HomePage() {
 
           <div>
 
-            <h2 className="text-sm font-bold tracking-[2px] text-gray-500 mb-5">
+            <h2 className="text-sm font-bold tracking-[2px] text-gray-500 mb-4">
               BROWSE BY FUNCTION
             </h2>
 
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-2 gap-3">
 
-              {functions.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-
-                    /* LOGIN REQUIRED */
-
-                    if (!user) {
-                      setShowAuth(true);
-                      return;
+              {functions.map(
+                (item, index) => (
+                  <button
+                    key={index}
+                    onClick={() =>
+                      handleFunctionClick(
+                        item.code
+                      )
                     }
+                    className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 text-left"
+                  >
 
-                    /* REDIRECT TO TOPICS PAGE */
+                    <div className="inline-block bg-black text-white text-xs font-bold px-3 py-1.5 rounded-lg mb-3">
 
-                    router.push(
-                      `/topics/${selectedClass}/${item.code.toLowerCase()}`
-                    );
-                  }}
-                  className="bg-white rounded-3xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 text-left"
-                >
+                      {item.code}
 
-                  {/* BADGE */}
-                  <div className="inline-block bg-black text-white text-sm font-bold px-4 py-2 rounded-xl mb-5">
-                    {item.code}
-                  </div>
+                    </div>
 
-                  {/* ICON */}
-                  <div className="mb-4">
-                    <Folder
-                      size={42}
-                      strokeWidth={1.8}
-                    />
-                  </div>
+                    <div className="mb-3">
 
-                  {/* TITLE */}
-                  <h3 className="text-xl font-bold mb-2">
-                    {item.title}
-                  </h3>
+                      <Folder
+                        size={32}
+                        strokeWidth={
+                          1.8
+                        }
+                      />
 
-                  {/* DESC */}
-                  <p className="text-gray-500 text-sm leading-6">
-                    {item.desc}
-                  </p>
+                    </div>
 
-                </button>
-              ))}
+                    <h3 className="text-lg font-bold mb-1">
+                      {item.title}
+                    </h3>
+
+                    <p className="text-gray-500 text-xs leading-5">
+                      {item.desc}
+                    </p>
+
+                  </button>
+                )
+              )}
 
             </div>
+
           </div>
+
         </div>
 
         {/* =========================
@@ -373,7 +687,9 @@ export default function HomePage() {
             </button>
 
           </div>
+
         </nav>
+
       </main>
 
       {/* =========================
@@ -386,6 +702,7 @@ export default function HomePage() {
           <div className="w-full max-w-sm bg-white rounded-[32px] p-7 shadow-2xl">
 
             {/* HEADER */}
+
             <div className="flex items-start justify-between mb-8">
 
               <div>
@@ -401,17 +718,24 @@ export default function HomePage() {
               </div>
 
               <button
-                onClick={() => setShowAuth(false)}
+                onClick={() =>
+                  setShowAuth(false)
+                }
                 className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center"
               >
+
                 <X size={20} />
+
               </button>
 
             </div>
 
             {/* GOOGLE */}
+
             <button
-              onClick={handleGoogleLogin}
+              onClick={
+                handleGoogleLogin
+              }
               disabled={loading}
               className="w-full border border-gray-300 rounded-2xl py-4 px-4 flex items-center justify-center gap-3 font-medium hover:bg-gray-50 transition-all mb-5"
             >
@@ -420,6 +744,7 @@ export default function HomePage() {
                 "Please wait..."
               ) : (
                 <>
+
                   <img
                     src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
                     alt="Google"
@@ -427,14 +752,17 @@ export default function HomePage() {
                   />
 
                   <span>
-                    Continue with Google
+                    Continue with
+                    Google
                   </span>
+
                 </>
               )}
 
             </button>
 
             {/* DIVIDER */}
+
             <div className="flex items-center gap-4 mb-5">
 
               <div className="h-px bg-gray-200 flex-1" />
@@ -448,6 +776,7 @@ export default function HomePage() {
             </div>
 
             {/* EMAIL */}
+
             <div className="space-y-4 mb-5">
 
               <input
@@ -455,7 +784,9 @@ export default function HomePage() {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) =>
-                  setEmail(e.target.value)
+                  setEmail(
+                    e.target.value
+                  )
                 }
                 className="w-full border border-gray-300 rounded-2xl px-4 py-4 outline-none"
               />
@@ -465,7 +796,9 @@ export default function HomePage() {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) =>
-                  setPassword(e.target.value)
+                  setPassword(
+                    e.target.value
+                  )
                 }
                 className="w-full border border-gray-300 rounded-2xl px-4 py-4 outline-none"
               />
@@ -473,8 +806,11 @@ export default function HomePage() {
             </div>
 
             {/* BUTTON */}
+
             <button
-              onClick={handleEmailAuth}
+              onClick={
+                handleEmailAuth
+              }
               disabled={loading}
               className="w-full bg-black text-white rounded-2xl py-4 px-4 flex items-center justify-center gap-3 font-medium"
             >
@@ -490,18 +826,24 @@ export default function HomePage() {
             </button>
 
             {/* SWITCH */}
+
             <button
               onClick={() =>
-                setIsSignup(!isSignup)
+                setIsSignup(
+                  !isSignup
+                )
               }
               className="w-full mt-5 text-sm text-gray-500 hover:text-black"
             >
+
               {isSignup
                 ? "Already have an account? Login"
                 : "New here? Create account"}
+
             </button>
 
           </div>
+
         </div>
       )}
     </>

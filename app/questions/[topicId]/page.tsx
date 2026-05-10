@@ -6,6 +6,9 @@ import { useParams, useRouter } from "next/navigation";
 import {
   collection,
   getDocs,
+  doc,
+  updateDoc,
+  increment,
 } from "firebase/firestore";
 
 import {
@@ -232,9 +235,13 @@ export default function QuestionsPage() {
     );
   };
 
-  const toggleAnswer = (
+  const toggleAnswer = async (
     id: string
   ) => {
+
+    const isAlreadyOpen =
+      openAnswers.includes(id);
+
     setOpenAnswers((prev) =>
       prev.includes(id)
         ? prev.filter(
@@ -242,6 +249,24 @@ export default function QuestionsPage() {
         )
         : [...prev, id]
     );
+
+    /* COUNT ONLY WHEN OPENING */
+
+    if (!isAlreadyOpen) {
+      try {
+
+        await updateDoc(
+          doc(db, "analytics", "live"),
+          {
+            questionsViewedHour:
+              increment(1),
+          }
+        );
+
+      } catch (error) {
+        console.error(error);
+      }
+    }
   };
 
   const toggleBookmarksView =
