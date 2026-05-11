@@ -10,6 +10,7 @@ import {
   Bookmark,
   Folder,
   User,
+  Lock,
   Sailboat,
   X,
   Mail,
@@ -701,14 +702,16 @@ export default function HomePage() {
 
 
         {/* =========================
-            BOTTOM NAV
-        ======================== */}
+    BOTTOM NAV
+======================== */}
 
-        <nav className="fixed bottom-0 left-0 z-50 w-full bg-white border-t border-gray-200 shadow-sm">
+        <nav className="fixed bottom-0 left-0 z-50 w-full bg-white border-t border-gray-200 shadow-sm backdrop-blur-lg">
 
           <div className="max-w-md mx-auto flex items-center justify-around py-3">
 
-            <button className="flex flex-col items-center text-black font-semibold">
+            {/* HOME */}
+
+            <button className="flex flex-col items-center text-black font-semibold active:scale-95 transition-all duration-150">
 
               <Home size={24} />
 
@@ -718,9 +721,28 @@ export default function HomePage() {
 
             </button>
 
-            <button className="flex flex-col items-center text-gray-500">
+            {/* FILTER LOCKED */}
 
-              <Filter size={24} />
+            <button
+              onClick={() =>
+                alert(
+                  "Filter available inside Questions Page"
+                )
+              }
+              className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
+            >
+
+              <div className="relative">
+
+                <Filter size={24} />
+
+                <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
+
+                  <Lock size={8} />
+
+                </div>
+
+              </div>
 
               <span className="text-xs mt-1">
                 Filter
@@ -728,9 +750,28 @@ export default function HomePage() {
 
             </button>
 
-            <button className="flex flex-col items-center text-gray-500">
+            {/* BOOKMARK LOCKED */}
 
-              <Bookmark size={24} />
+            <button
+              onClick={() =>
+                alert(
+                  "Bookmarks available inside Questions Page"
+                )
+              }
+              className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
+            >
+
+              <div className="relative">
+
+                <Bookmark size={24} />
+
+                <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
+
+                  <Lock size={8} />
+
+                </div>
+
+              </div>
 
               <span className="text-xs mt-1">
                 Bookmarks
@@ -741,7 +782,6 @@ export default function HomePage() {
           </div>
 
         </nav>
-
       </main>
 
       {/* =========================

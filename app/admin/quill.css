@@ -41,6 +41,20 @@
   font-family: "Courier New", monospace;
 }
 
+/* DEFAULT QUILL FONTS */
+
+.ql-font-serif {
+  font-family: Georgia, Times New Roman, serif;
+}
+
+.ql-font-monospace {
+  font-family: "Courier New", monospace;
+}
+
+.ql-font-sans-serif {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
 /* TOOLBAR */
 
 .ql-toolbar {
@@ -184,4 +198,3 @@
 .ql-editor * {
   min-width: 0 !important;
 }
-

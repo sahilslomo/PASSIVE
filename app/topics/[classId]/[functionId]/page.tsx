@@ -26,6 +26,7 @@ import {
   Bookmark,
   Filter,
   Search,
+  Lock,
 } from "lucide-react";
 
 import {
@@ -354,15 +355,17 @@ export default function TopicsPage() {
 
       {/* BOTTOM NAV */}
 
-      <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-sm">
+      <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-sm backdrop-blur-lg z-50">
 
         <div className="max-w-md mx-auto flex items-center justify-around py-3">
+
+          {/* HOME */}
 
           <button
             onClick={() =>
               router.push("/")
             }
-            className="flex flex-col items-center text-gray-500"
+            className="flex flex-col items-center text-gray-500 active:scale-95 transition-all duration-150"
           >
 
             <Home size={24} />
@@ -373,9 +376,28 @@ export default function TopicsPage() {
 
           </button>
 
-          <button className="flex flex-col items-center text-gray-500">
+          {/* FILTER LOCKED */}
 
-            <Filter size={24} />
+          <button
+            onClick={() =>
+              alert(
+                "Filter available inside Questions Page"
+              )
+            }
+            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
+          >
+
+            <div className="relative">
+
+              <Filter size={24} />
+
+              <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
+
+                <Lock size={8} />
+
+              </div>
+
+            </div>
 
             <span className="text-xs mt-1">
               Filter
@@ -383,9 +405,28 @@ export default function TopicsPage() {
 
           </button>
 
-          <button className="flex flex-col items-center text-gray-500">
+          {/* BOOKMARK LOCKED */}
 
-            <Bookmark size={24} />
+          <button
+            onClick={() =>
+              alert(
+                "Bookmarks available inside Questions Page"
+              )
+            }
+            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
+          >
+
+            <div className="relative">
+
+              <Bookmark size={24} />
+
+              <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
+
+                <Lock size={8} />
+
+              </div>
+
+            </div>
 
             <span className="text-xs mt-1">
               Bookmarks

@@ -195,11 +195,32 @@ export default function AdminPage() {
   ========================= */
 
   const handleDeleteTopic = async (
-    id: string
+    id: string,
+    title: string
   ) => {
-    await deleteDoc(doc(db, "topics", id));
 
-    fetchTopics();
+    const confirmed = window.confirm(
+      `Delete Topic "${title}"?\n\nThis will permanently remove the topic.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+
+      await deleteDoc(
+        doc(db, "topics", id)
+      );
+
+      fetchTopics();
+
+      alert("Topic deleted successfully");
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert("Failed to delete topic");
+    }
   };
 
   /* =========================
@@ -269,11 +290,32 @@ export default function AdminPage() {
   ========================= */
 
   const handleDeleteQuestion = async (
-    id: string
+    id: string,
+    questionText: string
   ) => {
-    await deleteDoc(doc(db, "questions", id));
 
-    fetchQuestions();
+    const confirmed = window.confirm(
+      `Delete this question?\n\n"${questionText}"`
+    );
+
+    if (!confirmed) return;
+
+    try {
+
+      await deleteDoc(
+        doc(db, "questions", id)
+      );
+
+      fetchQuestions();
+
+      alert("Question deleted successfully");
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert("Failed to delete question");
+    }
   };
 
   /* =========================
@@ -422,14 +464,18 @@ export default function AdminPage() {
               Select Topic
             </option>
 
-            {topics.map((t) => (
-              <option
-                key={t.id}
-                value={t.id}
-              >
-                {t.title}
-              </option>
-            ))}
+            {[...topics]
+              .sort((a: any, b: any) =>
+                a.title.localeCompare(b.title)
+              )
+              .map((t) => (
+                <option
+                  key={t.id}
+                  value={t.id}
+                >
+                  {t.title}
+                </option>
+              ))}
           </select>
 
           <input
@@ -515,77 +561,87 @@ export default function AdminPage() {
 
           <div className="space-y-4">
 
-            {topics.map((t) => (
-              <div
-                key={t.id}
-                className="bg-white p-4 border rounded-2xl"
-              >
-                <div className="flex justify-between items-start">
+            {[...topics]
+              .sort((a: any, b: any) =>
+                a.title.localeCompare(b.title)
+              )
+              .map((t) => (
+                <div
+                  key={t.id}
+                  className="bg-white p-4 border rounded-2xl"
+                >
+                  <div className="flex justify-between items-start">
 
-                  <div>
-                    <h3 className="font-bold text-lg">
-                      {t.title}
-                    </h3>
+                    <div>
+                      <h3 className="font-bold text-lg">
+                        {t.title}
+                      </h3>
 
-                    <p className="text-sm text-gray-500">
-                      {t.classId} •{" "}
-                      {t.functionId}
-                    </p>
-
-                    {t.description && (
-                      <p className="text-sm mt-2">
-                        {t.description}
+                      <p className="text-sm text-gray-500">
+                        {t.classId} •{" "}
+                        {t.functionId}
                       </p>
-                    )}
-                  </div>
 
-                  <div className="flex gap-2">
+                      {t.description && (
+                        <p className="text-sm mt-2">
+                          {t.description}
+                        </p>
+                      )}
+                    </div>
 
-                    <button
-                      onClick={() =>
-                        handleEditTopic(t)
-                      }
-                      className="p-2 border rounded-lg"
-                    >
-                      <Pencil size={16} />
-                    </button>
+                    <div className="flex gap-2">
 
-                    <button
-                      onClick={() =>
-                        handleDeleteTopic(t.id)
-                      }
-                      className="p-2 border rounded-lg text-red-500"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-
-                  </div>
-                </div>
-
-                {/* QUESTIONS */}
-
-                <div className="mt-5 space-y-3">
-
-                  {questions
-                    .filter(
-                      (q) =>
-                        q.topicId === t.id
-                    )
-                    .map((q) => (
-                      <div
-                        key={q.id}
-                        className="border rounded-xl p-3 bg-gray-50 overflow-hidden"
+                      <button
+                        onClick={() =>
+                          handleEditTopic(t)
+                        }
+                        className="p-2 border rounded-lg"
                       >
-                        <div className="flex justify-between gap-3">
+                        <Pencil size={16} />
+                      </button>
 
-                          <div className="flex-1 min-w-0 overflow-hidden">
+                      <button
+                        onClick={() =>
+                          handleDeleteTopic(
+                            t.id,
+                            t.title
+                          )
+                        }
+                        className="p-2 border rounded-lg text-red-500"
+                      >
+                        <Trash2 size={16} />
+                      </button>
 
-                            <p className="font-medium">
-                              Q. {q.q}
-                            </p>
+                    </div>
+                  </div>
 
-                            <div
-                              className="
+                  {/* QUESTIONS */}
+
+                  <div className="mt-5 space-y-3">
+
+                    {questions
+                      .filter(
+                        (q) =>
+                          q.topicId === t.id
+                      )
+                      .sort((a: any, b: any) =>
+                        a.q.localeCompare(b.q)
+                      )
+                      .map((q) => (
+                        <div
+                          key={q.id}
+                          className="border rounded-xl p-3 bg-gray-50 overflow-hidden"
+                        >
+                          <div className="flex justify-between gap-3">
+
+                            <div className="flex-1 min-w-0 overflow-hidden">
+
+                              <p className="font-medium">
+                                Q. {q.q}
+                              </p>
+
+                              <div
+                                className="
     text-sm
     text-gray-700
     mt-2
@@ -622,78 +678,79 @@ export default function AdminPage() {
     [&_blockquote]:pl-4
     [&_blockquote]:italic
   "
-                              dangerouslySetInnerHTML={{
-                                __html:
-                                  typeof q.a === "string" &&
-                                    (
-                                      q.a.includes("<p") ||
-                                      q.a.includes("<strong") ||
-                                      q.a.includes("<ul") ||
-                                      q.a.includes("<ol") ||
-                                      q.a.includes("<h1") ||
-                                      q.a.includes("<div")
-                                    )
-                                    ? q.a.replace(/&nbsp;/g, " ")
-                                    : q.a
-                                      ?.replace(/\n/g, "<br/>"),
-                              }}
-                            />
+                                dangerouslySetInnerHTML={{
+                                  __html:
+                                    typeof q.a === "string" &&
+                                      (
+                                        q.a.includes("<p") ||
+                                        q.a.includes("<strong") ||
+                                        q.a.includes("<ul") ||
+                                        q.a.includes("<ol") ||
+                                        q.a.includes("<h1") ||
+                                        q.a.includes("<div")
+                                      )
+                                      ? q.a.replace(/&nbsp;/g, " ")
+                                      : q.a
+                                        ?.replace(/\n/g, "<br/>"),
+                                }}
+                              />
 
-                            {q.labels?.length >
-                              0 && (
-                                <div className="flex flex-wrap gap-2 mt-3">
+                              {q.labels?.length >
+                                0 && (
+                                  <div className="flex flex-wrap gap-2 mt-3">
 
-                                  {q.labels.map(
-                                    (
-                                      l: any,
-                                      i: number
-                                    ) => (
-                                      <span
-                                        key={i}
-                                        className="text-xs bg-black text-white px-2 py-1 rounded-full"
-                                      >
-                                        {l.value}
-                                      </span>
-                                    )
-                                  )}
+                                    {q.labels.map(
+                                      (
+                                        l: any,
+                                        i: number
+                                      ) => (
+                                        <span
+                                          key={i}
+                                          className="text-xs bg-black text-white px-2 py-1 rounded-full"
+                                        >
+                                          {l.value}
+                                        </span>
+                                      )
+                                    )}
 
-                                </div>
-                              )}
+                                  </div>
+                                )}
 
-                          </div>
+                            </div>
 
-                          <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-2">
 
-                            <button
-                              onClick={() =>
-                                handleEditQuestion(
-                                  q
-                                )
-                              }
-                              className="p-2 border rounded-lg"
-                            >
-                              <Pencil size={15} />
-                            </button>
+                              <button
+                                onClick={() =>
+                                  handleEditQuestion(
+                                    q
+                                  )
+                                }
+                                className="p-2 border rounded-lg"
+                              >
+                                <Pencil size={15} />
+                              </button>
 
-                            <button
-                              onClick={() =>
-                                handleDeleteQuestion(
-                                  q.id
-                                )
-                              }
-                              className="p-2 border rounded-lg text-red-500"
-                            >
-                              <Trash2 size={15} />
-                            </button>
+                              <button
+                                onClick={() =>
+                                  handleDeleteQuestion(
+                                    q.id,
+                                    q.q
+                                  )
+                                }
+                                className="p-2 border rounded-lg text-red-500"
+                              >
+                                <Trash2 size={15} />
+                              </button>
 
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
 
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
           </div>
         </div>

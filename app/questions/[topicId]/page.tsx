@@ -1,8 +1,10 @@
 "use client";
 
 import ReactMarkdown from "react-markdown";
+import "@/app/admin/quill.css";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+
 import {
   collection,
   getDocs,
@@ -51,7 +53,6 @@ export default function QuestionsPage() {
 
   const [transcript, setTranscript] = useState("");
 
-  const [revision, setRevision] = useState("");
   const [loadingRevision, setLoadingRevision] = useState(false);
 
   const [loading, setLoading] =
@@ -89,9 +90,21 @@ export default function QuestionsPage() {
     "KOLKATA",
   ];
 
+  const [displayedRevision, setDisplayedRevision] =
+    useState("");
+
+  const [showRevisionBox, setShowRevisionBox] =
+    useState(false);
+
   const handleReviseAI = async () => {
+
     try {
+
+      setShowRevisionBox(true);
+
       setLoadingRevision(true);
+
+      setDisplayedRevision("");
 
       const response = await fetch("/api/revise", {
         method: "POST",
@@ -101,17 +114,41 @@ export default function QuestionsPage() {
         body: JSON.stringify({
           questions,
           transcript,
+          topicId,
         }),
       });
 
-      const data = await response.json();
+      if (!response.body) return;
 
-      if (data.success) {
-        setRevision(data.revision);
+      const reader =
+        response.body.getReader();
+
+      const decoder =
+        new TextDecoder();
+
+      let fullText = "";
+
+      while (true) {
+
+        const { done, value } =
+          await reader.read();
+
+        if (done) break;
+
+        const chunk =
+          decoder.decode(value);
+
+        fullText += chunk;
+
+        setDisplayedRevision(fullText);
       }
+
     } catch (error) {
+
       console.error(error);
+
     } finally {
+
       setLoadingRevision(false);
     }
   };
@@ -554,7 +591,7 @@ export default function QuestionsPage() {
                       </p>
 
                       <div
-                      className="
+                        className="
 w-full
 min-w-0
 text-gray-700
@@ -643,22 +680,65 @@ break-normal
 
       <div className="max-w-md mx-auto px-5 mt-6">
 
-        <button
-          onClick={handleReviseAI}
-          className="w-full bg-black text-white py-3 rounded-2xl font-medium text-sm shadow-sm"
-        >
-          {loadingRevision
-            ? `Generating ${topicName} Revision...`
-            : `✨ Revise  ${topicName} with 🪄 Study Genie`}
-        </button>
+        <div className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm">
 
-        {revision && (
-          <div className="mt-4 bg-white border border-gray-200 rounded-3xl p-5 whitespace-pre-wrap leading-7">
-            <ReactMarkdown>
-              {revision}
-            </ReactMarkdown>
-          </div>
-        )}
+          <button
+            onClick={handleReviseAI}
+            disabled={loadingRevision}
+            className="w-full bg-black text-white py-3 rounded-2xl font-medium text-sm"
+          >
+            {loadingRevision
+              ? `Generating ${topicName} Revision...`
+              : `✨ Revise ${topicName} with 🪄 Study Genie`}
+          </button>
+
+          {showRevisionBox && (
+
+            <div className="mt-4 border border-gray-200 rounded-2xl bg-gray-50 overflow-hidden">
+
+              {/* HEADER */}
+
+              <div className="px-4 py-3 border-b bg-white font-semibold text-sm">
+                🪄 Study Genie
+              </div>
+
+              {/* CONTENT */}
+
+              <div
+                className="
+            h-[420px]
+            overflow-y-auto
+            p-4
+            leading-7
+            text-gray-700
+            whitespace-pre-wrap
+          "
+              >
+
+                {loadingRevision &&
+                  displayedRevision.length === 0 && (
+                    <div className="flex gap-1 items-center">
+
+                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" />
+
+                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0.2s]" />
+
+                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0.4s]" />
+
+                    </div>
+                  )}
+
+                <ReactMarkdown>
+                  {displayedRevision}
+                </ReactMarkdown>
+
+              </div>
+
+            </div>
+
+          )}
+
+        </div>
 
       </div>
 

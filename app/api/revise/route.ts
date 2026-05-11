@@ -1,29 +1,78 @@
 import OpenAI from "openai";
-import { NextResponse } from "next/server";
+
+import {
+  doc,
+  getDoc,
+  setDoc,
+} from "firebase/firestore";
+
+import { db } from "@/lib/firebase";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(req: Request) {
-    try {
 
-        const openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
-        });
+  try {
 
-        const body = await req.json();
+    const body = await req.json();
 
-        const { questions, transcript } = body;
+    const {
+      questions,
+      transcript,
+      topicId,
+    } = body;
 
-        const formattedQuestions = questions
-            .map(
-                (q: any, index: number) =>
-                    `Question ${index + 1}:
+    /* =========================
+       CACHE CHECK
+    ========================= */
+
+    const cacheRef = doc(
+      db,
+      "revisionCache",
+      topicId
+    );
+
+    const cacheSnap =
+      await getDoc(cacheRef);
+
+    if (cacheSnap.exists()) {
+
+      return new Response(
+        cacheSnap.data().revision,
+        {
+          headers: {
+            "Content-Type":
+              "text/plain; charset=utf-8",
+          },
+        }
+      );
+    }
+
+    /* =========================
+       FORMAT QUESTIONS
+    ========================= */
+
+    const formattedQuestions =
+      questions
+        .map(
+          (q: any, index: number) =>
+            `Question ${index + 1}:
+
 ${q.question || q.q}
 
 Answer:
-${q.answer || q.a}`
-            )
-            .join("\n\n");
 
-        const prompt = `
+${q.answer || q.a}`
+        )
+        .join("\n\n");
+
+    /* =========================
+       PROMPT
+    ========================= */
+
+    const prompt = `
 You are an expert AI revision assistant.
 
 Use ALL provided learning context to generate the best possible revision notes.
@@ -50,36 +99,74 @@ QUESTIONS:
 ${formattedQuestions}
 `;
 
-        const completion =
-            await openai.chat.completions.create({
-                model: "gpt-4.1-mini",
-                messages: [
-                    {
-                        role: "user",
-                        content: prompt,
-                    },
-                ],
-            });
+    /* =========================
+       OPENAI STREAM
+    ========================= */
 
-        return NextResponse.json({
-            success: true,
-            revision:
-                completion.choices[0].message.content,
-        });
+    const stream =
+      await openai.chat.completions.create({
+        model: "gpt-4.1-nano-2025-04-14",
 
-    } catch (error) {
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
 
-        console.error(error);
+        stream: true,
+      });
 
-        return NextResponse.json(
-            {
-                success: false,
-                error:
-                    "Failed to generate revision",
-            },
-            {
-                status: 500,
-            }
-        );
-    }
+    const encoder = new TextEncoder();
+
+    const readableStream =
+      new ReadableStream({
+
+        async start(controller) {
+
+          let fullText = "";
+
+          for await (const chunk of stream) {
+
+            const text =
+              chunk.choices[0]?.delta?.content || "";
+
+            fullText += text;
+
+            controller.enqueue(
+              encoder.encode(text)
+            );
+          }
+
+          /* =========================
+             SAVE CACHE
+          ========================= */
+
+          await setDoc(cacheRef, {
+            revision: fullText,
+            createdAt: Date.now(),
+          });
+
+          controller.close();
+        },
+      });
+
+    return new Response(readableStream, {
+      headers: {
+        "Content-Type":
+          "text/plain; charset=utf-8",
+      },
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return new Response(
+      "Failed to generate revision",
+      {
+        status: 500,
+      }
+    );
+  }
 }
