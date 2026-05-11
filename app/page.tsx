@@ -104,71 +104,68 @@ export default function HomePage() {
   ]);
 
   /* =========================
-     AUTH STATE
-  ========================= */
+    AUTH STATE
+ ========================= */
 
   useEffect(() => {
-    let alreadyCounted = false;
+    let counted = false;
 
-    const unsubscribe =
-      onAuthStateChanged(
-        auth,
-        async (currentUser) => {
-          setUser(currentUser);
-
-          if (
-            currentUser &&
-            !alreadyCounted
-          ) {
-            alreadyCounted = true;
-
-            try {
-              await updateDoc(
-                doc(db, "analytics", "live"),
-                {
-                  usersOnline:
-                    increment(1),
-                }
-              );
-            } catch {
-              await setDoc(
-                doc(
-                  db,
-                  "analytics",
-                  "live"
-                ),
-                {
-                  usersOnline: 1,
-                  topicsViewedHour: 0,
-                  questionsViewedHour: 0,
-                }
-              );
-            }
+    const incrementUser = async () => {
+      try {
+        await updateDoc(
+          doc(db, "analytics", "live"),
+          {
+            usersOnline: increment(1),
           }
-        }
-      );
+        );
+      } catch {
+        await setDoc(
+          doc(db, "analytics", "live"),
+          {
+            usersOnline: 1,
+            topicsViewedHour: 0,
+            questionsViewedHour: 0,
+          }
+        );
+      }
+    };
 
-    const handleUnload =
-      async () => {
-        if (
-          auth.currentUser &&
-          alreadyCounted
-        ) {
-          try {
-            await updateDoc(
-              doc(
-                db,
-                "analytics",
-                "live"
-              ),
-              {
-                usersOnline:
-                  increment(-1),
-              }
-            );
-          } catch { }
+    const decrementUser = async () => {
+      if (!counted) return;
+
+      counted = false;
+
+      try {
+        await updateDoc(
+          doc(db, "analytics", "live"),
+          {
+            usersOnline: increment(-1),
+          }
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (currentUser) => {
+        setUser(currentUser);
+
+        if (currentUser && !counted) {
+          counted = true;
+          await incrementUser();
         }
-      };
+
+        if (!currentUser) {
+          await decrementUser();
+        }
+      }
+    );
+
+    const handleUnload = () => {
+      decrementUser();
+    };
 
     window.addEventListener(
       "beforeunload",
@@ -176,8 +173,6 @@ export default function HomePage() {
     );
 
     return () => {
-      handleUnload();
-
       window.removeEventListener(
         "beforeunload",
         handleUnload
@@ -395,18 +390,6 @@ export default function HomePage() {
 
   const handleLogout =
     async () => {
-      try {
-        await updateDoc(
-          doc(db, "analytics", "live"),
-          {
-            usersOnline:
-              increment(-1),
-          }
-        );
-      } catch (error) {
-        console.error(error);
-      }
-
       await signOut(auth);
     };
 
