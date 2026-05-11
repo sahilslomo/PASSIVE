@@ -1,12 +1,6 @@
 import OpenAI from "openai";
 
-import {
-  doc,
-  getDoc,
-  setDoc,
-} from "firebase/firestore";
-
-import { db } from "@/lib/firebase";
+import { adminDb } from "@/lib/firebase-admin";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -28,19 +22,18 @@ export async function POST(req: Request) {
        CACHE CHECK
     ========================= */
 
-    const cacheRef = doc(
-      db,
-      "revisionCache",
-      topicId
-    );
+    const cacheRef =
+      adminDb
+        .collection("revisionCache")
+        .doc(topicId);
 
     const cacheSnap =
-      await getDoc(cacheRef);
+      await cacheRef.get();
 
-    if (cacheSnap.exists()) {
+    if (cacheSnap.exists) {
 
       return new Response(
-        cacheSnap.data().revision,
+        cacheSnap.data()?.revision,
         {
           headers: {
             "Content-Type":
@@ -142,7 +135,7 @@ ${formattedQuestions}
              SAVE CACHE
           ========================= */
 
-          await setDoc(cacheRef, {
+          await cacheRef.set({
             revision: fullText,
             createdAt: Date.now(),
           });
@@ -160,7 +153,10 @@ ${formattedQuestions}
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "REVISION ERROR:",
+      error
+    );
 
     return new Response(
       "Failed to generate revision",

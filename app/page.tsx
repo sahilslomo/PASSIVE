@@ -578,7 +578,24 @@ export default function HomePage() {
                         item.code
                       )
                     }
-                    className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 text-left"
+                    className="
+bg-white
+rounded-2xl
+border
+border-gray-200
+p-4
+shadow-sm
+text-left
+transition-all
+duration-150
+
+hover:shadow-md
+hover:-translate-y-1
+
+active:scale-95
+active:shadow-inner
+active:translate-y-[2px]
+"
                   >
 
                     <div className="inline-block bg-black text-white text-xs font-bold px-3 py-1.5 rounded-lg mb-3">
