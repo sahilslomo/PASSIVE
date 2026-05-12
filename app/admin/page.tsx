@@ -9,6 +9,8 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  query, 
+  where,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -75,6 +77,10 @@ export default function AdminPage() {
 
   const [topics, setTopics] = useState<any[]>([]);
 
+  const [transcriptName, setTranscriptName] = useState("");
+  const [transcriptText, setTranscriptText] = useState("");
+  const [transcripts, setTranscripts] = useState<any[]>([]);
+
   const [questions, setQuestions] = useState<any[]>([]);
 
   const [selectedTopic, setSelectedTopic] = useState("");
@@ -135,10 +141,38 @@ export default function AdminPage() {
     setQuestions(data);
   };
 
+  const fetchTranscripts = async (topicId: string) => {
+    if (!topicId) {
+      setTranscripts([]);
+      return;
+    }
+
+    const q = query(
+      collection(db, "transcripts"),
+      where("topicId", "==", topicId)
+    );
+
+    const snapshot = await getDocs(q);
+
+    const data = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    setTranscripts(data);
+  };
+
   useEffect(() => {
     fetchTopics();
     fetchQuestions();
   }, []);
+
+  useEffect(() => {
+    if (selectedTopic) {
+      fetchTranscripts(selectedTopic);
+    }
+  }, [selectedTopic]);
+
 
   /* =========================
      ADD / UPDATE TOPIC
@@ -223,11 +257,45 @@ export default function AdminPage() {
     }
   };
 
+/* =========================
+   ADD TRANSCRIPT
+========================= */
+
+const handleAddTranscript = async () => {
+  if (!selectedTopic) {
+    alert("Select a topic first");
+    return;
+  }
+
+  if (!transcriptName || !transcriptText) {
+    alert("Fill all transcript fields");
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "transcripts"), {
+      topicId: selectedTopic,
+      name: transcriptName,
+      text: transcriptText,
+      createdAt: Date.now(),
+    });
+
+    setTranscriptName("");
+    setTranscriptText("");
+
+    fetchTranscripts(selectedTopic);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+
   /* =========================
      ADD / UPDATE QUESTION
   ========================= */
 
   const handleAddQuestion = async () => {
+
     if (!selectedTopic || !question) {
       alert("Fill all fields");
       return;
@@ -437,6 +505,52 @@ export default function AdminPage() {
             </button>
 
           </div>
+        </div>
+
+
+        {/* ================= TRANSCRIPT SECTION ================= */}
+
+        <div className="bg-white rounded-3xl p-5 mb-8 border">
+
+          <h2 className="text-xl font-bold mb-4">
+            Add Transcript
+          </h2>
+
+          <select
+            value={selectedTopic}
+            onChange={(e) => setSelectedTopic(e.target.value)}
+            className="w-full border p-3 rounded-xl mb-3"
+          >
+            <option value="">Select Topic</option>
+
+            {topics.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.title}
+              </option>
+            ))}
+          </select>
+
+          <input
+            value={transcriptName}
+            onChange={(e) => setTranscriptName(e.target.value)}
+            placeholder="Transcript Name"
+            className="w-full border p-3 rounded-xl mb-3"
+          />
+
+          <textarea
+            value={transcriptText}
+            onChange={(e) => setTranscriptText(e.target.value)}
+            placeholder="Transcript Text"
+            className="w-full border p-3 rounded-xl min-h-[120px] mb-3"
+          />
+
+          <button
+            onClick={handleAddTranscript}
+            className="w-full bg-black text-white p-3 rounded-xl"
+          >
+            Add Transcript
+          </button>
+
         </div>
 
         {/* ================= QUESTION SECTION ================= */}

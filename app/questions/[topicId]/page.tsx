@@ -11,6 +11,8 @@ import {
   doc,
   updateDoc,
   increment,
+  query,
+  where,
 } from "firebase/firestore";
 
 import {
@@ -51,7 +53,12 @@ export default function QuestionsPage() {
   const [questions, setQuestions] =
     useState<Question[]>([]);
 
-  const [transcript, setTranscript] = useState("");
+  const [transcripts, setTranscripts] =
+    useState<any[]>([]);
+
+  useEffect(() => {
+    console.log("📦 TRANSCRIPTS UPDATED:", transcripts);
+  }, [transcripts]);   // ✅ ADD HERE
 
   const [loadingRevision, setLoadingRevision] = useState(false);
 
@@ -106,6 +113,10 @@ export default function QuestionsPage() {
 
       setDisplayedRevision("");
 
+      console.log("FINAL SENT TRANSCRIPTS:", transcripts);
+      console.log("FINAL QUESTIONS:", questions);
+      console.log("TOPIC ID:", topicId);
+
       const response = await fetch("/api/revise", {
         method: "POST",
         headers: {
@@ -113,7 +124,7 @@ export default function QuestionsPage() {
         },
         body: JSON.stringify({
           questions,
-          transcript,
+          transcripts,
           topicId,
         }),
       });
@@ -179,82 +190,81 @@ export default function QuestionsPage() {
      FETCH QUESTIONS + TOPIC
   ========================= */
 
-  const fetchQuestions =
-    async () => {
-      try {
-        setLoading(true);
 
-        /* QUESTIONS */
 
-        const questionSnapshot =
-          await getDocs(
-            collection(db, "questions")
-          );
+  const fetchQuestions = async () => {
 
-        const questionData =
-          questionSnapshot.docs
-            .map((doc) => ({
-              id: doc.id,
-              ...(doc.data() as any),
-            }))
-            .filter(
-              (item: any) =>
-                item.topicId ===
-                topicId
-            );
+    try {
 
-        setQuestions(questionData);
+      setLoading(true);
 
-        /* TOPIC CONTEXT */
+      /* QUESTIONS */
 
-        const contextSnapshot =
-          await getDocs(
-            collection(db, "topicContext")
-          );
+      const questionSnapshot = await getDocs(
+        query(
+          collection(db, "questions"),
+          where("topicId", "==", topicId)
+        )
+      );
 
-        const contextDoc =
-          contextSnapshot.docs.find(
-            (doc) =>
-              (doc.data() as any).topicId ===
-              topicId
-          );
+      const questionData =
+        questionSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as any),
+        }));
 
-        if (contextDoc) {
-          const data =
-            contextDoc.data() as any;
+      setQuestions(questionData);
 
-          setTranscript(
-            data.transcript || ""
-          );
-        }
+      /* TRANSCRIPTS */
 
-        /* TOPIC */
+      const transcriptSnapshot = await getDocs(
+        query(
+          collection(db, "transcripts"),
+          where("topicId", "==", topicId)
+        )
+      );
 
-        const topicSnapshot =
-          await getDocs(
-            collection(db, "topics")
-          );
+      const transcriptData =
+        transcriptSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as any),
+        }));
 
-        const topicData =
-          topicSnapshot.docs.find(
-            (doc) =>
-              doc.id === topicId
-          );
+      console.log("TRANSCRIPTS LOADED:", transcriptData.length);
 
-        if (topicData) {
-          setTopicName(
-            (topicData.data() as any)
-              .title
-          );
-        }
-      } finally {
-        setLoading(false);
+      setTranscripts(transcriptData);
+
+      /* TOPIC */
+
+      const topicSnapshot =
+        await getDocs(
+          collection(db, "topics")
+        );
+
+      const topicData =
+        topicSnapshot.docs.find(
+          (doc) =>
+            doc.id === topicId
+        );
+
+      if (topicData) {
+
+        setTopicName(
+          (topicData.data() as any)
+            .title
+        );
       }
-    };
 
+    } finally {
+
+      setLoading(false);
+    }
+  };
+
+  /* 👇 ADD THIS HERE */
   useEffect(() => {
     fetchQuestions();
-  }, [topicId]);
+  }, []);
 
   /* =========================
      ACTIONS

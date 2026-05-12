@@ -1,71 +1,153 @@
 import OpenAI from "openai";
-
 import { adminDb } from "@/lib/firebase-admin";
+import crypto from "crypto";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
+/* =========================
+   TYPES
+========================= */
+
+type Transcript = {
+    id?: string;
+    text?: string;
+    transcript?: string;
+    content?: string;
+};
+
+type Question = {
+    id?: string;
+    question?: string;
+    q?: string;
+    answer?: string;
+    a?: string;
+};
+
 export async function POST(req: Request) {
+    try {
+        const body = await req.json();
 
-  try {
+        const {
+            questions = [],
+            transcript,
+            transcripts = [],
+            topicId,
+        } = body;
 
-    const body = await req.json();
+        /* =========================
+           BASIC DEBUG
+        ========================= */
 
-    const {
-      questions,
-      transcript,
-      topicId,
-    } = body;
+        console.log("🚀 REVISION API START");
+        console.log("topicId:", topicId);
+        console.log("questions count:", questions.length);
+        console.log("raw transcripts count:", transcripts.length);
 
-    /* =========================
-       CACHE CHECK
-    ========================= */
+        /* =========================
+           NORMALIZE TRANSCRIPTS
+        ========================= */
 
-    const cacheRef =
-      adminDb
-        .collection("revisionCache")
-        .doc(topicId);
+        const normalizedTranscripts = (transcripts as Transcript[])
+            .map((t) => ({
+                id: t?.id || "",
+                text: t?.text || t?.transcript || t?.content || "",
+            }))
+            .filter((t) => t.id || t.text);
 
-    const cacheSnap =
-      await cacheRef.get();
+        /* =========================
+           DEBUG: NORMALISED TRANSCRIPTS
+        ========================= */
 
-    if (cacheSnap.exists) {
+        console.log(
+            "📦 NORMALISED TRANSCRIPTS:",
+            normalizedTranscripts
+        );
 
-      return new Response(
-        cacheSnap.data()?.revision,
-        {
-          headers: {
-            "Content-Type":
-              "text/plain; charset=utf-8",
-          },
+        /* =========================
+           COMBINE TRANSCRIPTS
+        ========================= */
+
+        const combinedTranscript = normalizedTranscripts.length
+            ? normalizedTranscripts
+                .map((t) => t.text)
+                .filter(Boolean)
+                .join("\n\n")
+            : transcript || "";
+
+        /* =========================
+           DEBUG: TRANSCRIPT LENGTH
+        ========================= */
+
+        console.log(
+            "📏 COMBINED TRANSCRIPT LENGTH:",
+            combinedTranscript.length
+        );
+
+        /* =========================
+           FORMAT QUESTIONS
+        ========================= */
+
+        const formattedQuestions = (questions as Question[])
+            .map(
+                (q, i) =>
+                    `Q${i + 1}:\n${q.question || q.q}\nA:\n${q.answer || q.a}`
+            )
+            .join("\n\n");
+
+        /* =========================
+           CACHE KEY
+        ========================= */
+
+        const transcriptHash = crypto
+            .createHash("md5")
+            .update(
+                JSON.stringify(
+                    (normalizedTranscripts || [])
+                        .map((t) => ({
+                            id: t.id,
+                            text: t.text?.trim() || ""
+                        }))
+                        .sort((a, b) => a.id.localeCompare(b.id))
+                )
+            )
+            .digest("hex");
+            
+        const questionHash = crypto
+            .createHash("md5")
+            .update(
+                JSON.stringify(
+                    (questions as Question[])
+                        .map((q) => q.id || q.q)
+                        .sort()
+                )
+            )
+            .digest("hex");
+
+        const cacheKey = `${topicId}_${transcriptHash}_${questionHash}`;
+
+        console.log("🧠 CACHE KEY:", cacheKey);
+
+        const cacheRef = adminDb.collection("revisionCache").doc(cacheKey);
+        const cacheSnap = await cacheRef.get();
+
+        if (cacheSnap.exists) {
+            console.log("🚀 CACHE HIT");
+            return new Response(cacheSnap.data()?.revision, {
+                headers: {
+                    "Content-Type": "text/plain; charset=utf-8",
+                },
+            });
         }
-      );
-    }
 
-    /* =========================
-       FORMAT QUESTIONS
-    ========================= */
+        console.log("🔥 CACHE MISS - calling OpenAI");
 
-    const formattedQuestions =
-      questions
-        .map(
-          (q: any, index: number) =>
-            `Question ${index + 1}:
+        /* =========================
+           PROMPT
+        ========================= */
 
-${q.question || q.q}
-
-Answer:
-
-${q.answer || q.a}`
-        )
-        .join("\n\n");
-
-    /* =========================
-       PROMPT
-    ========================= */
-
-    const prompt = `
+        const prompt = `
 You are an expert AI revision assistant.
 
 Use ALL provided learning context to generate the best possible revision notes.
@@ -86,83 +168,74 @@ Generate:
 - structured understanding
 
 TRANSCRIPT:
-${transcript}
+${combinedTranscript}
 
 QUESTIONS:
 ${formattedQuestions}
-`;
 
-    /* =========================
-       OPENAI STREAM
-    ========================= */
+Generate structured revision notes.
+        `;
 
-    const stream =
-      await openai.chat.completions.create({
-        model: "gpt-4.1-nano-2025-04-14",
+        /* =========================
+           DEBUG: PROMPT SIZE
+        ========================= */
 
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
+        console.log("📤 PROMPT SIZE:", prompt.length);
 
-        stream: true,
-      });
+        /* =========================
+           OPENAI STREAM
+        ========================= */
 
-    const encoder = new TextEncoder();
+        const stream = await openai.chat.completions.create({
+            model: "gpt-4.1-nano-2025-04-14",
+            messages: [
+                {
+                    role: "user",
+                    content: prompt,
+                },
+            ],
+            stream: true,
+        });
 
-    const readableStream =
-      new ReadableStream({
+        const encoder = new TextEncoder();
 
-        async start(controller) {
+        const readableStream = new ReadableStream({
+            async start(controller) {
+                let fullText = "";
 
-          let fullText = "";
+                for await (const chunk of stream) {
+                    const text = chunk.choices[0]?.delta?.content || "";
+                    fullText += text;
 
-          for await (const chunk of stream) {
+                    controller.enqueue(encoder.encode(text));
+                }
 
-            const text =
-              chunk.choices[0]?.delta?.content || "";
+                /* =========================
+                   SAVE CACHE
+                ========================= */
 
-            fullText += text;
+                await cacheRef.set({
+                    revision: fullText,
+                    createdAt: Date.now(),
+                });
 
-            controller.enqueue(
-              encoder.encode(text)
-            );
-          }
+                console.log("💾 CACHE SAVED (REVISION STORED)");
 
-          /* =========================
-             SAVE CACHE
-          ========================= */
+                controller.close();
+            },
+        });
 
-          await cacheRef.set({
-            revision: fullText,
-            createdAt: Date.now(),
-          });
+        return new Response(readableStream, {
+            headers: {
+                "Content-Type": "text/plain; charset=utf-8",
+            },
+        });
 
-          controller.close();
-        },
-      });
+    } catch (error) {
+        console.error("❌ REVISION ERROR:", error);
 
-    return new Response(readableStream, {
-      headers: {
-        "Content-Type":
-          "text/plain; charset=utf-8",
-      },
-    });
-
-  } catch (error) {
-
-    console.error(
-      "REVISION ERROR:",
-      error
-    );
-
-    return new Response(
-      "Failed to generate revision",
-      {
-        status: 500,
-      }
-    );
-  }
+        return new Response("Failed to generate revision", {
+            status: 500,
+        });
+    }
 }
