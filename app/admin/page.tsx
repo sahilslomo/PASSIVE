@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 
 import { db, auth } from "@/lib/firebase";
+import * as XLSX from "xlsx";
 
 import {
   signInWithEmailAndPassword,
@@ -182,8 +183,8 @@ export default function AdminPage() {
 
   useEffect(() => {
 
-     signOut(auth);
-     
+    signOut(auth);
+
     fetchTopics();
     fetchQuestions();
 
@@ -361,6 +362,167 @@ export default function AdminPage() {
     }
   };
 
+
+  const handleFullExcelUpload = async (
+    e: any
+  ) => {
+
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    try {
+
+      const data =
+        await file.arrayBuffer();
+
+      const workbook =
+        XLSX.read(data);
+
+      /* =========================
+         TOPICS SHEET
+      ========================= */
+
+      const topicsSheet =
+        workbook.Sheets["topics"];
+
+      const topicsData: any[] =
+        XLSX.utils.sheet_to_json(
+          topicsSheet
+        );
+
+      const topicMap: any = {};
+
+      // FETCH EXISTING TOPICS
+      const existingTopicsSnapshot =
+        await getDocs(
+          collection(db, "topics")
+        );
+
+      const existingTopics =
+        existingTopicsSnapshot.docs.map(
+          (doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })
+        );
+
+      for (const row of topicsData) {
+
+        const existingTopic =
+          existingTopics.find(
+            (t: any) =>
+              t.title
+                ?.trim()
+                .toLowerCase() ===
+              row.title
+                ?.trim()
+                .toLowerCase()
+          );
+
+        // IF TOPIC EXISTS
+        if (existingTopic) {
+
+          topicMap[
+            row.title.trim().toLowerCase()
+          ] = existingTopic.id;
+
+          continue;
+        }
+
+        // CREATE TOPIC
+        const topicRef = await addDoc(
+          collection(db, "topics"),
+          {
+            title: row.title || "",
+            description:
+              row.description || "",
+            classId:
+              row.classId || "class2",
+            functionId:
+              row.functionId || "fn3",
+          }
+        );
+
+        topicMap[
+          row.title.trim().toLowerCase()
+        ] = topicRef.id;
+      }
+
+      /* =========================
+         QUESTIONS SHEET
+      ========================= */
+
+      const questionsSheet =
+        workbook.Sheets["questions"];
+
+      const questionsData: any[] =
+        XLSX.utils.sheet_to_json(
+          questionsSheet
+        );
+
+      for (const row of questionsData) {
+
+        const topicId =
+          topicMap[
+          row.topic
+            ?.trim()
+            .toLowerCase()
+          ];
+
+        if (!topicId) continue;
+
+        // LABELS
+        const parsedLabels =
+          row.labels
+            ? row.labels
+              .split(",")
+              .map((l: string) =>
+                l.trim().toUpperCase()
+              )
+            : [];
+
+        await addDoc(
+          collection(db, "questions"),
+          {
+            topicId,
+
+            q: row.question || "",
+
+            a:
+              row.answer
+                ?.replace(/\n/g, "<br/>") ||
+              "",
+
+            labels: parsedLabels.map(
+              (l: string) => ({
+                type:
+                  labelOptions.includes(l)
+                    ? "city"
+                    : "tag",
+
+                value: l,
+              })
+            ),
+          }
+        );
+      }
+
+      alert(
+        "Topics + Questions Uploaded!"
+      );
+
+      fetchTopics();
+
+      fetchQuestions();
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert("Excel upload failed");
+    }
+  };
 
   /* =========================
      ADD / UPDATE QUESTION
@@ -806,6 +968,18 @@ export default function AdminPage() {
             </button>
 
           </div>
+
+
+          <label className="w-full flex items-center justify-center bg-black text-white p-3 rounded-xl cursor-pointer mb-3">
+            Upload Excel File
+
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFullExcelUpload}
+              className="hidden"
+            />
+          </label>
 
           <button
             onClick={handleAddQuestion}
