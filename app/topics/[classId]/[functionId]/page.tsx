@@ -290,11 +290,40 @@ export default function TopicsPage() {
                 <button
                   key={topic.id}
                   onClick={() =>
-                    router.push(
-                      `/questions/${topic.id}`
-                    )
+                    router.push(`/questions/${topic.id}`)
                   }
-                  className="w-full bg-white border border-gray-200 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-between group"
+                  style={{
+                    WebkitTapHighlightColor:
+                      "transparent",
+                  }}
+                  className="
+w-full
+bg-white
+border
+border-gray-200
+rounded-3xl
+p-5
+shadow-sm
+flex
+items-center
+justify-between
+group
+
+transition-all
+duration-150
+ease-out
+
+hover:shadow-md
+hover:-translate-y-1
+
+active:scale-[0.97]
+active:bg-gray-100
+active:shadow-inner
+active:translate-y-[2px]
+
+touch-manipulation
+select-none
+"
                 >
 
                   {/* LEFT */}
