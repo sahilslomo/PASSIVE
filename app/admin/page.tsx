@@ -9,11 +9,17 @@ import {
   deleteDoc,
   doc,
   updateDoc,
-  query, 
+  query,
   where,
 } from "firebase/firestore";
 
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
+
+import {
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+} from "firebase/auth";
 
 import {
   Trash2,
@@ -68,6 +74,18 @@ const formats = [
 
 export default function AdminPage() {
   const [classId, setClassId] = useState("class2");
+
+  const [isAuthenticated, setIsAuthenticated] =
+    useState(false);
+
+  const [email, setEmail] =
+    useState("");
+
+  const [password, setPassword] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(true);
 
   const [functionId, setFunctionId] = useState("fn3");
 
@@ -163,15 +181,69 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+
+     signOut(auth);
+     
     fetchTopics();
     fetchQuestions();
+
+    const unsubscribe =
+      onAuthStateChanged(auth, (user) => {
+
+        if (
+          user &&
+          user.email === "sahilslomo@gmail.com"
+        ) {
+
+          setIsAuthenticated(true);
+
+        } else {
+
+          setIsAuthenticated(false);
+
+        }
+
+        setLoading(false);
+
+      });
+
+    return () => unsubscribe();
+
   }, []);
 
-  useEffect(() => {
-    if (selectedTopic) {
-      fetchTranscripts(selectedTopic);
+  const handleLogin = async () => {
+
+    try {
+
+      const result =
+        await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+      if (
+        result.user.email !==
+        "sahilslomo@gmail.com"
+      ) {
+
+        alert("Not authorized");
+
+        await signOut(auth);
+
+        return;
+      }
+
+      setIsAuthenticated(true);
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert("Invalid login");
+
     }
-  }, [selectedTopic]);
+  };
 
 
   /* =========================
@@ -257,37 +329,37 @@ export default function AdminPage() {
     }
   };
 
-/* =========================
-   ADD TRANSCRIPT
-========================= */
+  /* =========================
+     ADD TRANSCRIPT
+  ========================= */
 
-const handleAddTranscript = async () => {
-  if (!selectedTopic) {
-    alert("Select a topic first");
-    return;
-  }
+  const handleAddTranscript = async () => {
+    if (!selectedTopic) {
+      alert("Select a topic first");
+      return;
+    }
 
-  if (!transcriptName || !transcriptText) {
-    alert("Fill all transcript fields");
-    return;
-  }
+    if (!transcriptName || !transcriptText) {
+      alert("Fill all transcript fields");
+      return;
+    }
 
-  try {
-    await addDoc(collection(db, "transcripts"), {
-      topicId: selectedTopic,
-      name: transcriptName,
-      text: transcriptText,
-      createdAt: Date.now(),
-    });
+    try {
+      await addDoc(collection(db, "transcripts"), {
+        topicId: selectedTopic,
+        name: transcriptName,
+        text: transcriptText,
+        createdAt: Date.now(),
+      });
 
-    setTranscriptName("");
-    setTranscriptText("");
+      setTranscriptName("");
+      setTranscriptText("");
 
-    fetchTranscripts(selectedTopic);
-  } catch (error) {
-    console.error(error);
-  }
-};
+      fetchTranscripts(selectedTopic);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
 
   /* =========================
@@ -416,15 +488,92 @@ const handleAddTranscript = async () => {
   /* =========================
      UI
   ========================= */
+  if (loading) {
+
+    return (
+
+      <main className="min-h-screen flex items-center justify-center">
+
+        <p className="text-lg font-medium">
+          Loading...
+        </p>
+
+      </main>
+
+    );
+  }
+
+  if (!isAuthenticated) {
+
+    return (
+
+      <main className="min-h-screen flex items-center justify-center bg-[#f5f5f5] p-5">
+
+        <div className="bg-white p-6 rounded-3xl border w-full max-w-sm">
+
+          <h1 className="text-2xl font-bold mb-4">
+            Admin Login
+          </h1>
+
+          <input
+            type="email"
+            placeholder="Admin email"
+            value={email}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
+            className="w-full border p-3 rounded-xl mb-4"
+          />
+
+          <input
+            type="password"
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
+            className="w-full border p-3 rounded-xl mb-4"
+          />
+
+          <button
+            onClick={handleLogin}
+            className="w-full bg-black text-white p-3 rounded-xl"
+          >
+            Login
+          </button>
+
+        </div>
+
+      </main>
+
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#f5f5f5] p-5">
+
       <div className="max-w-2xl mx-auto w-full overflow-x-hidden">
 
-        <h1 className="text-3xl font-bold mb-8">
-          NAVIK Admin
-        </h1>
+        <div className="flex items-center justify-between mb-8">
 
+          <h1 className="text-3xl font-bold">
+            NAVIK Admin
+          </h1>
+
+          <button
+            onClick={async () => {
+
+              await signOut(auth);
+
+              setIsAuthenticated(false);
+
+            }}
+            className="bg-red-500 text-white px-4 py-2 rounded-xl"
+          >
+            Logout
+          </button>
+
+        </div>
         {/* ================= TOPIC SECTION ================= */}
 
         <div className="bg-white rounded-3xl p-5 mb-8 border">
@@ -518,7 +667,11 @@ const handleAddTranscript = async () => {
 
           <select
             value={selectedTopic}
-            onChange={(e) => setSelectedTopic(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedTopic(value);
+              fetchTranscripts(value);
+            }}
             className="w-full border p-3 rounded-xl mb-3"
           >
             <option value="">Select Topic</option>
@@ -869,6 +1022,6 @@ const handleAddTranscript = async () => {
           </div>
         </div>
       </div>
-    </main>
+    </main >
   );
 }
