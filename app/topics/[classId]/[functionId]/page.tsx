@@ -15,6 +15,11 @@ import {
   query,
   where,
   getDocs,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  increment,
 } from "firebase/firestore";
 
 import {
@@ -69,9 +74,210 @@ export default function TopicsPage() {
   const [searchText, setSearchText] =
     useState("");
 
+  const [showSubscriptionModal, setShowSubscriptionModal] =
+    useState(false);
+
+  const [trialExpired, setTrialExpired] =
+    useState(false);
+
+  const [userClicks, setUserClicks] =
+    useState(0);
+
+  const [checkingAccess, setCheckingAccess] =
+    useState(true);
+
   const functionTitle =
     functionNames?.[functionId] ||
     "Topics";
+
+
+  const handleSubscribe =
+    async () => {
+
+      try {
+
+        const amount =
+          classId === "class2"
+            ? 299
+            : 199;
+
+        const response =
+          await fetch(
+            "/api/create-order",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body: JSON.stringify({
+                amount,
+              }),
+            }
+          );
+
+        const order =
+          await response.json();
+
+        const options = {
+          key:
+            process.env
+              .NEXT_PUBLIC_RAZORPAY_KEY_ID,
+
+          amount:
+            order.amount,
+
+          currency:
+            order.currency,
+
+          name: "NAVIK",
+
+          description:
+            classId === "class2"
+              ? "MEO Class 2 Subscription"
+              : "MEO Class 4 Subscription",
+
+          order_id:
+            order.id,
+
+          handler:
+            async function () {
+
+              const user =
+                auth.currentUser;
+
+              if (!user) return;
+
+              const userRef =
+                doc(
+                  db,
+                  "users",
+                  user.uid
+                );
+
+              await updateDoc(
+                userRef,
+                {
+                  isSubscribed:
+                    true,
+
+                  subscribedClass:
+                    classId,
+                }
+              );
+
+              alert(
+                "Payment Successful"
+              );
+            },
+
+          theme: {
+            color: "#000000",
+          },
+        };
+
+        const razorpay =
+          new (window as any)
+            .Razorpay(options);
+
+        razorpay.open();
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          "Payment Failed"
+        );
+      }
+    };
+
+  /* =========================
+ TRIAL SYSTEM
+========================= */
+
+  useEffect(() => {
+
+    const checkTrial = async () => {
+
+      try {
+
+        const user = auth.currentUser;
+
+        if (!user) {
+          setCheckingAccess(false);
+          return;
+        }
+
+        const userRef = doc(
+          db,
+          "users",
+          user.uid
+        );
+
+        const userSnap =
+          await getDoc(userRef);
+
+        // FIRST TIME USER
+
+        if (!userSnap.exists()) {
+
+          await setDoc(userRef, {
+            email: user.email || "",
+            trialStartedAt: Date.now(),
+            topicClicks: 0,
+            isSubscribed: false,
+          });
+
+          setCheckingAccess(false);
+
+          return;
+        }
+
+        const data = userSnap.data();
+
+        const startedAt =
+          data?.trialStartedAt || 0;
+
+        const isSubscribed =
+          data?.isSubscribed || false;
+
+        const clicks =
+          data?.topicClicks || 0;
+
+        setUserClicks(clicks);
+
+        // 24 HOUR CHECK
+
+        const expired =
+          Date.now() - startedAt >
+          24 * 60 * 60 * 1000;
+
+        if (
+          expired &&
+          !isSubscribed
+        ) {
+
+          setTrialExpired(true);
+
+        }
+
+      } catch (error) {
+
+        console.error(error);
+
+      } finally {
+
+        setCheckingAccess(false);
+
+      }
+    };
+
+    checkTrial();
+
+  }, []);
 
   /* =========================
      FETCH TOPICS
@@ -151,12 +357,134 @@ export default function TopicsPage() {
       a.title.localeCompare(b.title)
     );
 
+
+  /* =========================
+ TOPIC CLICK
+========================= */
+
+  const handleTopicClick = async (
+    topicId: string
+  ) => {
+
+    try {
+
+      const user =
+        auth.currentUser;
+
+      // NO USER
+
+      if (!user) {
+        return;
+      }
+
+      // BLOCK EXPIRED USERS
+
+      if (trialExpired) {
+        return;
+      }
+
+      const userRef = doc(
+        db,
+        "users",
+        user.uid
+      );
+
+      // INCREMENT CLICKS
+
+      await updateDoc(userRef, {
+        topicClicks: increment(1),
+      });
+
+      const newClicks =
+        userClicks + 1;
+
+      setUserClicks(newClicks);
+
+      // POPUP TRIGGERS
+
+      const shouldShowPopup =
+        newClicks === 1 ||
+        newClicks === 10 ||
+        newClicks === 50;
+
+      if (shouldShowPopup) {
+
+        setShowSubscriptionModal(true);
+
+        return;
+      }
+
+      // NAVIGATE
+
+      router.push(
+        `/questions/${topicId}`
+      );
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
+  };
+
   /* =========================
      LOADER
   ========================= */
 
   if (loading) {
     return <LoadingScreen />;
+  }
+  if (checkingAccess) {
+    return <LoadingScreen />;
+  }
+
+  if (trialExpired) {
+
+    return (
+
+      <main className="min-h-screen bg-[#f5f5f5] flex items-center justify-center p-5">
+
+        <div className="bg-white border border-gray-200 rounded-3xl p-8 max-w-md w-full shadow-sm">
+
+          <h1 className="text-3xl font-bold leading-tight">
+            Your Free Trial Has Ended
+          </h1>
+
+          <p className="text-gray-600 mt-5 leading-7">
+            Continue your preparation with full access to:
+          </p>
+
+          <div className="mt-6 space-y-4">
+
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-black" />
+              <p>All oral questions</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-black" />
+              <p>AI revision notes</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-black" />
+              <p>All transcripts</p>
+            </div>
+
+          </div>
+
+          <button
+           onClick={handleSubscribe}
+            className="w-full mt-8 bg-black text-white py-4 rounded-2xl font-semibold"
+          >
+            Subscribe Now
+          </button>
+
+        </div>
+
+      </main>
+
+    );
   }
 
   return (
@@ -290,7 +618,7 @@ export default function TopicsPage() {
                 <button
                   key={topic.id}
                   onClick={() =>
-                    router.push(`/questions/${topic.id}`)
+                    handleTopicClick(topic.id)
                   }
                   style={{
                     WebkitTapHighlightColor:
@@ -466,6 +794,47 @@ select-none
         </div>
 
       </nav>
+      {showSubscriptionModal && (
+
+        <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-5">
+
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl">
+
+            <h2 className="text-2xl font-bold">
+              Try NAVIK Free for 24 Hours
+            </h2>
+
+            <p className="text-gray-600 mt-4">
+              Learn smarter. Revise faster.
+            </p>
+
+            <div className="flex flex-col gap-3 mt-8">
+
+              <button
+                onClick={() => {
+                  handleSubscribe();
+                }}
+                className="w-full bg-black text-white py-4 rounded-2xl font-semibold"
+              >
+                Subscribe Now
+              </button>
+
+              <button
+                onClick={() =>
+                  setShowSubscriptionModal(false)
+                }
+                className="w-full border border-gray-300 py-4 rounded-2xl font-medium"
+              >
+                Continue Free Trial
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
     </main>
   );
 }
