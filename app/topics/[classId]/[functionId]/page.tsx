@@ -332,6 +332,7 @@ export default function TopicsPage() {
               setShowContinueTrial(false);
 
               setShowSubscriptionModal(true);
+              return;
             }
           }
 
@@ -903,12 +904,12 @@ overflow-hidden
 
               <p className="text-sm text-gray-600 leading-6">
 
-                {classId === "class2"
-                  ? "Subscribe with NAVIK for MEO CLASS 2 ✨"
-                  : "Subscribe with NAVIK for MEO CLASS 4 ✨"}
+                {subscriptionMessage ||
+                  (classId === "class2"
+                    ? "Subscribe with NAVIK for MEO CLASS 2 ✨"
+                    : "Subscribe with NAVIK for MEO CLASS 4 ✨")}
 
               </p>
-
             </div>
 
             {/* PRICE CARD */}
