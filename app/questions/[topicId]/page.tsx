@@ -13,6 +13,7 @@ import {
   increment,
   query,
   where,
+  getDoc,
 } from "firebase/firestore";
 
 import {
@@ -26,7 +27,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 
-import { db } from "@/lib/firebase";
+import { db, auth, } from "@/lib/firebase";
 import LoadingScreen from "@/components/LoadingScreen";
 
 type Label = {
@@ -44,6 +45,13 @@ type Question = {
 };
 
 export default function QuestionsPage() {
+
+  const [checkingAccess, setCheckingAccess] =
+    useState(true);
+
+  const [hasAccess, setHasAccess] =
+    useState(false);
+
   const params = useParams();
   const router = useRouter();
 
@@ -261,9 +269,113 @@ export default function QuestionsPage() {
     }
   };
 
-  /* 👇 ADD THIS HERE */
   useEffect(() => {
-    fetchQuestions();
+
+    const checkAccess = async () => {
+
+      try {
+
+        const user =
+          auth.currentUser;
+
+        if (!user) {
+
+          router.replace("/");
+
+          return;
+        }
+
+        // GET TOPIC
+
+        const topicRef = doc(
+          db,
+          "topics",
+          topicId
+        );
+
+        const topicSnap =
+          await getDoc(topicRef);
+
+        if (!topicSnap.exists()) {
+
+          router.replace("/");
+
+          return;
+        }
+
+        const topicData =
+          topicSnap.data();
+
+        const topicClass =
+          topicData?.classId || "";
+
+        // GET USER
+
+        const userRef = doc(
+          db,
+          "users",
+          user.uid
+        );
+
+        const userSnap =
+          await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+
+          router.replace("/");
+
+          return;
+        }
+
+        const userData =
+          userSnap.data();
+
+        const isSubscribed =
+          userData?.isSubscribed || false;
+
+        const subscribedClass =
+          userData?.subscribedClass || "";
+
+        // BLOCK WRONG CLASS
+
+        if (
+          isSubscribed &&
+          subscribedClass
+            .trim()
+            .toLowerCase() !==
+          topicClass
+            .trim()
+            .toLowerCase()
+        ) {
+
+          alert(
+            `You are subscribed to ${subscribedClass.toUpperCase()} only`
+          );
+
+          router.replace("/");
+
+          return;
+        }
+
+        setHasAccess(true);
+
+        await fetchQuestions();
+
+      } catch (error) {
+
+        console.error(error);
+
+        router.replace("/");
+
+      } finally {
+
+        setCheckingAccess(false);
+
+      }
+    };
+
+    checkAccess();
+
   }, []);
 
   /* =========================
@@ -391,8 +503,15 @@ export default function QuestionsPage() {
      LOADER
   ========================= */
 
-  if (loading) {
+  if (
+    loading ||
+    checkingAccess
+  ) {
     return <LoadingScreen />;
+  }
+
+  if (!hasAccess) {
+    return null;
   }
 
   return (

@@ -398,27 +398,25 @@ export default function HomePage() {
   ========================= */
 
   const handleFunctionClick =
-    async (code: string) => {
+    (code: string) => {
       if (!user) {
         setShowAuth(true);
         return;
       }
 
-      try {
-        await updateDoc(
-          doc(db, "analytics", "live"),
-          {
-            topicsViewedHour:
-              increment(1),
-          }
-        );
-      } catch (error) {
-        console.error(error);
-      }
-
+      // NAVIGATE IMMEDIATELY
       router.push(
         `/topics/${selectedClass}/${code.toLowerCase()}`
       );
+
+      // FIRESTORE IN BACKGROUND
+      updateDoc(
+        doc(db, "analytics", "live"),
+        {
+          topicsViewedHour:
+            increment(1),
+        }
+      ).catch(console.error);
     };
 
   return (

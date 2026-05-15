@@ -20,6 +20,7 @@ import {
   setDoc,
   updateDoc,
   increment,
+  arrayUnion,
 } from "firebase/firestore";
 
 import {
@@ -30,6 +31,9 @@ import {
   Home,
   Bookmark,
   Filter,
+  ShieldCheck,
+  IndianRupee,
+  Rocket,
   Search,
   Lock,
 } from "lucide-react";
@@ -76,6 +80,12 @@ export default function TopicsPage() {
 
   const [showSubscriptionModal, setShowSubscriptionModal] =
     useState(false);
+
+  const [subscriptionMessage, setSubscriptionMessage] =
+    useState("");
+
+  const [showContinueTrial, setShowContinueTrial] =
+    useState(true);
 
   const [trialExpired, setTrialExpired] =
     useState(false);
@@ -160,17 +170,25 @@ export default function TopicsPage() {
               await updateDoc(
                 userRef,
                 {
-                  isSubscribed:
-                    true,
+                  isSubscribed: true,
 
-                  subscribedClass:
-                    classId,
+                  subscribedClasses:
+                    arrayUnion(classId),
+
+                  subscriptionStartedAt:
+                    Date.now(),
+
+                  subscriptionEndsAt:
+                    Date.now() +
+                    30 * 24 * 60 * 60 * 1000,
                 }
               );
 
               alert(
                 "Payment Successful"
               );
+
+              window.location.href = "/";
             },
 
           theme: {
@@ -202,12 +220,12 @@ export default function TopicsPage() {
 
     const checkTrial = async () => {
 
+
       try {
 
         const user = auth.currentUser;
-
         if (!user) {
-          setCheckingAccess(false);
+          router.push("/");
           return;
         }
 
@@ -247,21 +265,88 @@ export default function TopicsPage() {
         const clicks =
           data?.topicClicks || 0;
 
+        const subscribedClasses =
+          data?.subscribedClasses || [];
+
+        const subscriptionEndsAt =
+          data?.subscriptionEndsAt || 0;
+
+
         setUserClicks(clicks);
 
-        // 24 HOUR CHECK
+        // CLASS ACCESS PROTECTION
 
-        const expired =
-          Date.now() - startedAt >
-          24 * 60 * 60 * 1000;
+        if (isSubscribed) {
 
-        if (
-          expired &&
-          !isSubscribed
-        ) {
+          const subscriptionExpired =
+            Date.now() > subscriptionEndsAt;
 
-          setTrialExpired(true);
+          if (
+            !subscribedClasses ||
+            subscribedClasses.length === 0
+          ) {
 
+            await updateDoc(userRef, {
+              isSubscribed: false,
+            });
+
+            setSubscriptionMessage(
+              `Subscribe now to clear ${classId.toUpperCase()} faster with NAVIK`
+            );
+
+            setShowContinueTrial(false);
+
+            setShowSubscriptionModal(true);
+
+            return;
+          }
+
+          // SUBSCRIPTION EXPIRED
+
+          if (subscriptionExpired) {
+
+            await updateDoc(userRef, {
+              isSubscribed: false,
+            });
+
+          } else {
+
+            // CHECK CLASS ACCESS
+
+            const hasAccess =
+              subscribedClasses.includes(
+                classId
+              );
+
+            if (!hasAccess) {
+
+              const subscribedText =
+                subscribedClasses[0] === "class2"
+                  ? "MEO CLASS 2"
+                  : "MEO CLASS 4";
+
+              setSubscriptionMessage(
+                `You are only subscribed for ${subscribedText}.`
+              );
+
+              setShowContinueTrial(false);
+
+              setShowSubscriptionModal(true);
+            }
+          }
+
+        } else {
+
+          // TRIAL CHECK
+
+          const expired =
+            Date.now() - startedAt >
+            24 * 60 * 60 * 1000;
+
+          if (expired) {
+
+            setTrialExpired(true);
+          }
         }
 
       } catch (error) {
@@ -362,69 +447,69 @@ export default function TopicsPage() {
  TOPIC CLICK
 ========================= */
 
-  const handleTopicClick = async (
+  const handleTopicClick = (
     topicId: string
   ) => {
 
-    try {
+    const user =
+      auth.currentUser;
 
-      const user =
-        auth.currentUser;
+    // NO USER
 
-      // NO USER
-
-      if (!user) {
-        return;
-      }
-
-      // BLOCK EXPIRED USERS
-
-      if (trialExpired) {
-        return;
-      }
-
-      const userRef = doc(
-        db,
-        "users",
-        user.uid
-      );
-
-      // INCREMENT CLICKS
-
-      await updateDoc(userRef, {
-        topicClicks: increment(1),
-      });
-
-      const newClicks =
-        userClicks + 1;
-
-      setUserClicks(newClicks);
-
-      // POPUP TRIGGERS
-
-      const shouldShowPopup =
-        newClicks === 1 ||
-        newClicks === 10 ||
-        newClicks === 50;
-
-      if (shouldShowPopup) {
-
-        setShowSubscriptionModal(true);
-
-        return;
-      }
-
-      // NAVIGATE
-
-      router.push(
-        `/questions/${topicId}`
-      );
-
-    } catch (error) {
-
-      console.error(error);
-
+    if (!user) {
+      return;
     }
+
+    // BLOCK EXPIRED USERS
+
+    if (trialExpired) {
+
+      setSubscriptionMessage(
+        "Your free trial has ended"
+      );
+
+      setShowContinueTrial(false);
+
+      setShowSubscriptionModal(true);
+
+      return;
+    }
+
+    const newClicks =
+      userClicks + 1;
+
+    setUserClicks(newClicks);
+
+    // POPUP TRIGGERS
+
+    const shouldShowPopup =
+      newClicks === 1 ||
+      newClicks === 10 ||
+      newClicks === 50;
+
+    // FIRESTORE IN BACKGROUND
+
+    updateDoc(
+      doc(db, "users", user.uid),
+      {
+        topicClicks: increment(1),
+      }
+    ).catch(console.error);
+
+    // SHOW POPUP
+
+    if (shouldShowPopup) {
+
+      setShowSubscriptionModal(true);
+
+      return;
+    }
+
+    // NAVIGATE IMMEDIATELY
+
+    router.push(
+      `/questions/${topicId}`
+    );
   };
 
   /* =========================
@@ -436,55 +521,6 @@ export default function TopicsPage() {
   }
   if (checkingAccess) {
     return <LoadingScreen />;
-  }
-
-  if (trialExpired) {
-
-    return (
-
-      <main className="min-h-screen bg-[#f5f5f5] flex items-center justify-center p-5">
-
-        <div className="bg-white border border-gray-200 rounded-3xl p-8 max-w-md w-full shadow-sm">
-
-          <h1 className="text-3xl font-bold leading-tight">
-            Your Free Trial Has Ended
-          </h1>
-
-          <p className="text-gray-600 mt-5 leading-7">
-            Continue your preparation with full access to:
-          </p>
-
-          <div className="mt-6 space-y-4">
-
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-black" />
-              <p>All oral questions</p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-black" />
-              <p>AI revision notes</p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-black" />
-              <p>All transcripts</p>
-            </div>
-
-          </div>
-
-          <button
-           onClick={handleSubscribe}
-            className="w-full mt-8 bg-black text-white py-4 rounded-2xl font-semibold"
-          >
-            Subscribe Now
-          </button>
-
-        </div>
-
-      </main>
-
-    );
   }
 
   return (
@@ -796,37 +832,214 @@ select-none
       </nav>
       {showSubscriptionModal && (
 
-        <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-5">
+        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center px-5">
 
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl">
+          <div
+            className="
+bg-white
+relative
+w-[88%]
+max-w-[320px]
+rounded-[28px]
+p-4
+shadow-[0_20px_80px_rgba(0,0,0,0.25)]
+animate-in
+zoom-in-95
+duration-300
+overflow-hidden
+"
+          >
 
-            <h2 className="text-2xl font-bold">
-              Try NAVIK Free for 24 Hours
+            {/* BLUE GLOW */}
+
+            <div className="absolute -top-16 -right-16 w-40 h-40 bg-black/20 rounded-full blur-3xl opacity-40" />
+
+            {/* FLOATING ICON */}
+
+            <div className="flex justify-center mb-2">
+
+              <div className="relative w-44 h-20 flex items-end justify-center overflow-hidden">
+
+                {/* WAVE 1 */}
+
+                <div className="absolute bottom-0 w-[220px] h-5 bg-black/10 rounded-[100%] animate-wave1" />
+
+                {/* WAVE 2 */}
+
+                <div className="absolute bottom-2 w-[180px] h-4 bg-black/5 rounded-[100%] animate-wave2" />
+
+                {/* SHIP */}
+
+                <div className="relative animate-float">
+
+                  <Sailboat
+                    size={42}
+                    strokeWidth={2.2}
+                    className="text-black"
+                  />
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* TITLE */}
+
+            <h2 className="text-xl font-bold text-center mt-3 leading-tight">
+
+              Unlock Full NAVIK Access
+
             </h2>
 
-            <p className="text-gray-600 mt-4">
-              Learn smarter. Revise faster.
-            </p>
+            {/* SUBTEXT */}
 
-            <div className="flex flex-col gap-3 mt-8">
+            <div className="flex items-center justify-center gap-2 mt-3 text-center">
+
+              <ShieldCheck
+                size={18}
+                className="text-cyan-500"
+              />
+
+              <p className="text-sm text-gray-600 leading-6">
+
+                {classId === "class2"
+                  ? "Subscribe with NAVIK for MEO CLASS 2 ✨"
+                  : "Subscribe with NAVIK for MEO CLASS 4 ✨"}
+
+              </p>
+
+            </div>
+
+            {/* PRICE CARD */}
+
+            <div
+              className="
+mt-3
+bg-gradient-to-br
+from-cyan-50
+to-white
+border
+border-cyan-100
+rounded-2xl
+p-4
+"
+            >
+
+              <div className="flex items-center gap-2">
+
+                <div
+                  className="
+w-14
+h-14
+rounded-2xl
+bg-cyan-500
+text-white
+flex
+items-center
+justify-center
+shadow-md
+"
+                >
+
+                  <IndianRupee size={24} />
+
+                </div>
+
+                <div>
+
+                  <p className="text-xs text-gray-500">
+                    Subscription
+                  </p>
+
+                  <div className="flex items-end gap-2">
+
+                    <h3 className="text-3xl font-bold">
+                      ₹{classId === "class2" ? "299" : "199"}
+                    </h3>
+
+                    <span className="text-gray-500 text-sm mb-1">
+                      / month
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* BUTTONS */}
+
+            <div className="flex flex-col gap-2 mt-3">
 
               <button
                 onClick={() => {
                   handleSubscribe();
                 }}
-                className="w-full bg-black text-white py-4 rounded-2xl font-semibold"
+                className="
+w-full
+bg-black
+hover:bg-gray-900
+text-white
+py-3
+rounded-2xl
+font-semibold
+text-sm
+transition-all
+active:scale-[0.98]
+flex
+items-center
+justify-center
+gap-2
+"
               >
+
+                <Rocket size={18} />
+
                 Subscribe Now
+
               </button>
 
-              <button
-                onClick={() =>
-                  setShowSubscriptionModal(false)
-                }
-                className="w-full border border-gray-300 py-4 rounded-2xl font-medium"
-              >
-                Continue Free Trial
-              </button>
+              {showContinueTrial && (
+
+                <button
+                  onClick={() =>
+                    setShowSubscriptionModal(false)
+                  }
+                  className="
+w-full
+border
+border-gray-300
+bg-white
+py-3
+rounded-2xl
+font-medium
+text-sm
+hover:bg-gray-50
+transition-all
+active:scale-[0.98]
+"
+                >
+
+                  Continue Free Trial
+
+                </button>
+
+              )}
+
+            </div>
+
+            {/* FOOTER */}
+
+            <div className="flex items-center justify-center gap-2 mt-3">
+
+              <Lock size={12} className="text-gray-400" />
+
+              <p className="text-[11px] text-gray-400">
+                Secure payment powered by Razorpay
+              </p>
 
             </div>
 

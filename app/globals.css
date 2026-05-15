@@ -45,7 +45,7 @@ body {
 @keyframes waveMove1 {
   0% {
     transform: translateX(0px);
-      }
+  }
 
   50% {
     transform: translateX(10px);
@@ -68,7 +68,7 @@ body {
   100% {
     transform: translateX(0px);
   }
-  }
+}
 
 .animate-float {
   animation: floatShip 2.5s ease-in-out infinite;
