@@ -69,6 +69,9 @@ export default function TopicsPage() {
 
   const user = auth.currentUser;
 
+  const [hasClassAccess, setHasClassAccess] =
+    useState(true);
+
   const [topics, setTopics] =
     useState<any[]>([]);
 
@@ -95,6 +98,9 @@ export default function TopicsPage() {
 
   const [checkingAccess, setCheckingAccess] =
     useState(true);
+
+  const [isSubscribed, setIsSubscribed] =
+    useState(false);
 
   const functionTitle =
     functionNames?.[functionId] ||
@@ -262,6 +268,8 @@ export default function TopicsPage() {
         const isSubscribed =
           data?.isSubscribed || false;
 
+          setIsSubscribed(isSubscribed);
+
         const clicks =
           data?.topicClicks || 0;
 
@@ -276,65 +284,66 @@ export default function TopicsPage() {
 
         // CLASS ACCESS PROTECTION
 
-        if (isSubscribed) {
+       if (isSubscribed) {
 
-          const subscriptionExpired =
-            Date.now() > subscriptionEndsAt;
+  const subscriptionExpired =
+    Date.now() > subscriptionEndsAt;
 
-          if (
-            !subscribedClasses ||
-            subscribedClasses.length === 0
-          ) {
+  // SUBSCRIPTION EXPIRED
 
-            await updateDoc(userRef, {
-              isSubscribed: false,
-            });
+  if (subscriptionExpired) {
 
-            setSubscriptionMessage(
-              `Subscribe now to clear ${classId.toUpperCase()} faster with NAVIK`
-            );
+    await updateDoc(userRef, {
+      isSubscribed: false,
+    });
 
-            setShowContinueTrial(false);
+    setHasClassAccess(false);
 
-            setShowSubscriptionModal(true);
+    setTrialExpired(true);
 
-            return;
-          }
+    setSubscriptionMessage(
+      "Your subscription has expired"
+    );
 
-          // SUBSCRIPTION EXPIRED
+    setShowContinueTrial(false);
 
-          if (subscriptionExpired) {
+    setShowSubscriptionModal(true);
 
-            await updateDoc(userRef, {
-              isSubscribed: false,
-            });
+    return;
+  }
 
-          } else {
+  // CHECK CLASS ACCESS
 
-            // CHECK CLASS ACCESS
+  const hasAccess =
+    subscribedClasses.includes(classId);
 
-            const hasAccess =
-              subscribedClasses.includes(
-                classId
-              );
+  // USER DOES NOT HAVE THIS CLASS
 
-            if (!hasAccess) {
+  if (!hasAccess) {
 
-              const subscribedText =
-                subscribedClasses[0] === "class2"
-                  ? "MEO CLASS 2"
-                  : "MEO CLASS 4";
+    setHasClassAccess(false);
 
-              setSubscriptionMessage(
-                `You are only subscribed for ${subscribedText}.`
-              );
+    setSubscriptionMessage(
+      `Your subscription is active for ${
+        subscribedClasses[0] === "class2"
+          ? "MEO CLASS 2"
+          : "MEO CLASS 4"
+      } only.`
+    );
 
-              setShowContinueTrial(false);
+    setShowContinueTrial(false);
 
-              setShowSubscriptionModal(true);
-              return;
-            }
-          }
+    setShowSubscriptionModal(true);
+
+    return;
+  }
+
+  // USER HAS ACCESS
+
+  setHasClassAccess(true);
+
+  setShowSubscriptionModal(false);
+
 
         } else {
 
@@ -476,6 +485,10 @@ export default function TopicsPage() {
       return;
     }
 
+    if (!hasClassAccess) {
+      return;
+    }
+
     const newClicks =
       userClicks + 1;
 
@@ -483,10 +496,13 @@ export default function TopicsPage() {
 
     // POPUP TRIGGERS
 
-    const shouldShowPopup =
-      newClicks === 1 ||
-      newClicks === 10 ||
-      newClicks === 50;
+  const shouldShowPopup =
+  !isSubscribed &&
+  (
+    newClicks === 1 ||
+    newClicks === 10 ||
+    newClicks === 50
+  );
 
     // FIRESTORE IN BACKGROUND
 

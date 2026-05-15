@@ -333,28 +333,45 @@ export default function QuestionsPage() {
         const isSubscribed =
           userData?.isSubscribed || false;
 
-        const subscribedClass =
-          userData?.subscribedClass || "";
+        const subscribedClasses =
+          userData?.subscribedClasses || [];
 
-        // BLOCK WRONG CLASS
+        const subscriptionEndsAt =
+          userData?.subscriptionEndsAt || 0;
 
-        if (
-          isSubscribed &&
-          subscribedClass
-            .trim()
-            .toLowerCase() !==
-          topicClass
-            .trim()
-            .toLowerCase()
-        ) {
+      // CHECK SUBSCRIPTION EXPIRY
 
-          alert(
-            `You are subscribed to ${subscribedClass.toUpperCase()} only`
-          );
+if (isSubscribed) {
 
-          router.replace("/");
+  const subscriptionExpired =
+    Date.now() > subscriptionEndsAt;
 
-          return;
+  if (subscriptionExpired) {
+
+    alert("Your subscription expired");
+
+    router.replace("/");
+
+    return;
+  }
+
+  // CHECK CLASS ACCESS
+
+  const hasClassAccess =
+    subscribedClasses.includes(topicClass);
+
+  if (!hasClassAccess) {
+
+    alert(
+      `You are subscribed to ${
+        subscribedClasses[0]?.toUpperCase() || "another class"
+      } only`
+    );
+
+    router.replace("/");
+
+    return;
+  }
         }
 
         setHasAccess(true);
