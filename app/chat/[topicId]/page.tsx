@@ -149,7 +149,9 @@ export default function ChatPage() {
 
                         <button
                             onClick={() =>
-                                router.back()
+                                router.push(
+                                    `/questions/${topicId}`
+                                )
                             }
                             className="w-11 h-11 rounded-2xl border border-gray-200 bg-white flex items-center justify-center"
                         >
@@ -293,8 +295,8 @@ export default function ChatPage() {
                             <div
                                 key={i}
                                 className={`p-4 rounded-3xl whitespace-pre-wrap leading-7 ${msg.role === "user"
-                                        ? "bg-black text-white ml-10"
-                                        : "bg-white border border-gray-200 mr-10"
+                                    ? "bg-black text-white ml-10"
+                                    : "bg-white border border-gray-200 mr-10"
                                     }`}
                             >
 

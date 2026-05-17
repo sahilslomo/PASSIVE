@@ -987,10 +987,14 @@ break-normal
             onClick={() =>
               router.push("/")
             }
-            className="flex flex-col items-center justify-center text-gray-500"
+            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
           >
 
-            <Home size={22} />
+            <div className="relative">
+
+              <Home size={20} />
+
+            </div>
 
             <span className="text-xs mt-1">
               Home
@@ -1004,10 +1008,14 @@ break-normal
             onClick={() =>
               setShowFilter(true)
             }
-            className="flex flex-col items-center justify-center text-gray-500"
+            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
           >
 
-            <Filter size={22} />
+            <div className="relative">
+
+              <Filter size={20} />
+
+            </div>
 
             <span className="text-xs mt-1">
               Filter
@@ -1022,10 +1030,13 @@ break-normal
             onClick={
               toggleBookmarksView
             }
-            className="flex flex-col items-center justify-center text-gray-500"
+            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
           >
+            <div className="relative">
 
-            <Bookmark size={22} />
+              <Bookmark size={20} />
+
+            </div>
 
             <span className="text-xs mt-1">
               {showBookmarksOnly
@@ -1037,16 +1048,22 @@ break-normal
 
           {/* REVISION */}
 
+          {/* REVISION */}
+
           <button
             onClick={() =>
               router.push(
                 `/revision/${topicId}`
               )
             }
-            className="flex flex-col items-center justify-center text-gray-500"
+            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
           >
 
-            <BookOpen size={22} />
+            <div className="relative">
+
+              <BookOpen size={20} />
+
+            </div>
 
             <span className="text-xs mt-1">
               Revision
@@ -1062,13 +1079,16 @@ break-normal
                 `/chat/${topicId}`
               )
             }
-            className="flex flex-col items-center justify-center text-cyan-600"
+            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
           >
+            <div className="relative">
 
-            <Bot size={22} />
+              <Bot size={20} />
+
+            </div>
 
             <span className="text-xs mt-1">
-              NAVIK BRO
+              Navik Bro
             </span>
 
           </button>

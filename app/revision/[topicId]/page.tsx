@@ -507,7 +507,9 @@ export default function RevisionPage() {
 
                         <button
                             onClick={() =>
-                                router.back()
+                                router.push(
+                                    `/questions/${topicId}`
+                                )
                             }
                             className="w-11 h-11 rounded-2xl border border-gray-200 bg-white flex items-center justify-center"
                         >
