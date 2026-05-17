@@ -18,7 +18,9 @@ if (!admin.apps.length) {
 
   admin.initializeApp({
     credential:
-      admin.credential.cert(serviceAccount),
+      admin.credential.cert(
+        serviceAccount as admin.ServiceAccount
+      ),
   });
 
 }

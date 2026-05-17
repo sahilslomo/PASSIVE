@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { adminDb } from "@/lib/firebase-admin";
+import { adminDb } from "@/lib/firebaseAdmin";
 import crypto from "crypto";
 
 const openai = new OpenAI({
@@ -33,8 +33,29 @@ export async function POST(req: Request) {
             questions = [],
             transcript,
             transcripts = [],
+            uploadedFiles = [],
             topicId,
         } = body;
+
+        const globalFilesSnap =
+            await adminDb
+                .collection("globalFiles")
+                .where(
+                    "topicId",
+                    "==",
+                    topicId
+                )
+                .get();
+
+        const globalFiles =
+            globalFilesSnap.docs.map(
+                (doc) => doc.data()
+            );
+
+        console.log(
+            "🌍 GLOBAL FILES:",
+            globalFiles.length
+        );
 
         /* =========================
            BASIC DEBUG
@@ -86,6 +107,34 @@ export async function POST(req: Request) {
         );
 
         /* =========================
+           COMBINE FILE TEXT
+        ========================= */
+
+        const uploadedFilesText =
+            uploadedFiles
+                .map(
+                    (file: any) =>
+                        `LOCAL FILE: ${file.name}\n\n${file.extractedText}`
+                )
+                .join("\n\n");
+
+        const globalFilesText =
+            globalFiles
+                .map(
+                    (file: any) =>
+                        `GLOBAL FILE: ${file.fileName}\n\n${file.extractedText}`
+                )
+                .join("\n\n");
+
+        const combinedFilesText =
+            `
+${uploadedFilesText}
+
+${globalFilesText}
+`;
+
+
+        /* =========================
            FORMAT QUESTIONS
         ========================= */
 
@@ -113,7 +162,7 @@ export async function POST(req: Request) {
                 )
             )
             .digest("hex");
-            
+
         const questionHash = crypto
             .createHash("md5")
             .update(
@@ -172,6 +221,9 @@ ${combinedTranscript}
 
 QUESTIONS:
 ${formattedQuestions}
+
+UPLOADED STUDY FILES:
+${combinedFilesText}
 
 Generate structured revision notes.
         `;

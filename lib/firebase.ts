@@ -1,10 +1,12 @@
-import { initializeApp } from "firebase/app";
 
-import { getAuth } from "firebase/auth";
+import { initializeApp } from "firebase/app";
 
 import { getFirestore } from "firebase/firestore";
 
+import { getAuth } from "firebase/auth";
+
 const firebaseConfig = {
+
   apiKey: "AIzaSyD-CQ6PEYCUip5McM5lPp07GK7vOGaamIc",
 
   authDomain: "navik-c4443.firebaseapp.com",
@@ -18,10 +20,14 @@ const firebaseConfig = {
   appId: "1:394338096150:web:2482d814ce430a7d371137",
 
   measurementId: "G-006YE7FHJZ",
+
 };
 
-const app = initializeApp(firebaseConfig);
+const app =
+  initializeApp(firebaseConfig);
 
-export const auth = getAuth(app);
+export const auth =
+  getAuth(app);
 
-export const db = getFirestore(app);
+export const db =
+  getFirestore(app);

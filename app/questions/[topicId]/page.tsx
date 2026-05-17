@@ -1,8 +1,12 @@
 "use client";
 
-import ReactMarkdown from "react-markdown";
 import "@/app/admin/quill.css";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+} from "react";
+
 import { useParams, useRouter } from "next/navigation";
 
 import {
@@ -20,11 +24,12 @@ import {
   ArrowLeft,
   Sailboat,
   Home,
-  Bookmark,
+  BookOpen,
   Filter,
   Star,
   Search,
   MessageCircle,
+  Bot,
 } from "lucide-react";
 
 import { db, auth, } from "@/lib/firebase";
@@ -68,24 +73,59 @@ export default function QuestionsPage() {
     console.log("📦 TRANSCRIPTS UPDATED:", transcripts);
   }, [transcripts]);   // ✅ ADD HERE
 
-  const [loadingRevision, setLoadingRevision] = useState(false);
-
   const [loading, setLoading] =
     useState(true);
 
   const [topicName, setTopicName] =
     useState("Topic");
 
+  type Bookmark = {
+    questionId: string;
+    topicId: string;
+  };
+
   const [bookmarks, setBookmarks] =
-    useState<string[]>([]);
+    useState<Bookmark[]>([]);
+
+  const bookmarksLoaded =
+    useRef(false);
+
+  /* LOAD BOOKMARKS */
+
+  useEffect(() => {
+
+    const saved =
+      localStorage.getItem(
+        "bookmarks"
+      );
+
+    if (saved) {
+
+      setBookmarks(
+        JSON.parse(saved)
+      );
+    }
+
+    bookmarksLoaded.current = true;
+
+  }, []);
+
+  /* SAVE BOOKMARKS */
+
+  useEffect(() => {
+
+    if (!bookmarksLoaded.current)
+      return;
+
+    localStorage.setItem(
+      "bookmarks",
+      JSON.stringify(bookmarks)
+    );
+
+  }, [bookmarks]);
 
   const [openAnswers, setOpenAnswers] =
     useState<string[]>([]);
-
-  const [
-    showBookmarksOnly,
-    setShowBookmarksOnly,
-  ] = useState(false);
 
   const [searchText, setSearchText] =
     useState("");
@@ -104,95 +144,6 @@ export default function QuestionsPage() {
     "KOCHI",
     "KOLKATA",
   ];
-
-  const [displayedRevision, setDisplayedRevision] =
-    useState("");
-
-  const [showRevisionBox, setShowRevisionBox] =
-    useState(false);
-
-  const handleReviseAI = async () => {
-
-    try {
-
-      setShowRevisionBox(true);
-
-      setLoadingRevision(true);
-
-      setDisplayedRevision("");
-
-      console.log("FINAL SENT TRANSCRIPTS:", transcripts);
-      console.log("FINAL QUESTIONS:", questions);
-      console.log("TOPIC ID:", topicId);
-
-      const response = await fetch("/api/revise", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          questions,
-          transcripts,
-          topicId,
-        }),
-      });
-
-      if (!response.body) return;
-
-      const reader =
-        response.body.getReader();
-
-      const decoder =
-        new TextDecoder();
-
-      let fullText = "";
-
-      while (true) {
-
-        const { done, value } =
-          await reader.read();
-
-        if (done) break;
-
-        const chunk =
-          decoder.decode(value);
-
-        fullText += chunk;
-
-        setDisplayedRevision(fullText);
-      }
-
-    } catch (error) {
-
-      console.error(error);
-
-    } finally {
-
-      setLoadingRevision(false);
-    }
-  };
-
-  /* =========================
-     BOOKMARKS
-  ========================= */
-
-  useEffect(() => {
-    const saved =
-      localStorage.getItem(
-        "bookmarks"
-      );
-
-    if (saved) {
-      setBookmarks(JSON.parse(saved));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(
-      "bookmarks",
-      JSON.stringify(bookmarks)
-    );
-  }, [bookmarks]);
 
   /* =========================
      FETCH QUESTIONS + TOPIC
@@ -271,127 +222,122 @@ export default function QuestionsPage() {
 
   useEffect(() => {
 
-    const checkAccess = async () => {
+    const unsubscribe = auth.onAuthStateChanged(
+      async (user) => {
 
-      try {
+        try {
 
-        const user =
-          auth.currentUser;
+          if (!user) {
 
-        if (!user) {
+            router.replace("/");
+
+            return;
+          }
+
+          // GET TOPIC
+
+          const topicRef = doc(
+            db,
+            "topics",
+            topicId
+          );
+
+          const topicSnap =
+            await getDoc(topicRef);
+
+          if (!topicSnap.exists()) {
+
+            router.replace("/");
+
+            return;
+          }
+
+          const topicData =
+            topicSnap.data();
+
+          const topicClass =
+            topicData?.classId || "";
+
+          // GET USER
+
+          const userRef = doc(
+            db,
+            "users",
+            user.uid
+          );
+
+          const userSnap =
+            await getDoc(userRef);
+
+          if (!userSnap.exists()) {
+
+            router.replace("/");
+
+            return;
+          }
+
+          const userData =
+            userSnap.data();
+
+          const isSubscribed =
+            userData?.isSubscribed || false;
+
+          const subscribedClasses =
+            userData?.subscribedClasses || [];
+
+          const subscriptionEndsAt =
+            userData?.subscriptionEndsAt || 0;
+
+          if (isSubscribed) {
+
+            const subscriptionExpired =
+              Date.now() > subscriptionEndsAt;
+
+            if (subscriptionExpired) {
+
+              alert("Your subscription expired");
+
+              router.replace("/");
+
+              return;
+            }
+
+            const hasClassAccess =
+              subscribedClasses.includes(topicClass);
+
+            if (!hasClassAccess) {
+
+              alert(
+                `You are subscribed to ${subscribedClasses[0]?.toUpperCase() ||
+                "another class"
+                } only`
+              );
+
+              router.replace("/");
+
+              return;
+            }
+          }
+
+          setHasAccess(true);
+
+          await fetchQuestions();
+
+        } catch (error) {
+
+          console.error(error);
 
           router.replace("/");
 
-          return;
+        } finally {
+
+          setCheckingAccess(false);
+
         }
-
-        // GET TOPIC
-
-        const topicRef = doc(
-          db,
-          "topics",
-          topicId
-        );
-
-        const topicSnap =
-          await getDoc(topicRef);
-
-        if (!topicSnap.exists()) {
-
-          router.replace("/");
-
-          return;
-        }
-
-        const topicData =
-          topicSnap.data();
-
-        const topicClass =
-          topicData?.classId || "";
-
-        // GET USER
-
-        const userRef = doc(
-          db,
-          "users",
-          user.uid
-        );
-
-        const userSnap =
-          await getDoc(userRef);
-
-        if (!userSnap.exists()) {
-
-          router.replace("/");
-
-          return;
-        }
-
-        const userData =
-          userSnap.data();
-
-        const isSubscribed =
-          userData?.isSubscribed || false;
-
-        const subscribedClasses =
-          userData?.subscribedClasses || [];
-
-        const subscriptionEndsAt =
-          userData?.subscriptionEndsAt || 0;
-
-      // CHECK SUBSCRIPTION EXPIRY
-
-if (isSubscribed) {
-
-  const subscriptionExpired =
-    Date.now() > subscriptionEndsAt;
-
-  if (subscriptionExpired) {
-
-    alert("Your subscription expired");
-
-    router.replace("/");
-
-    return;
-  }
-
-  // CHECK CLASS ACCESS
-
-  const hasClassAccess =
-    subscribedClasses.includes(topicClass);
-
-  if (!hasClassAccess) {
-
-    alert(
-      `You are subscribed to ${
-        subscribedClasses[0]?.toUpperCase() || "another class"
-      } only`
+      }
     );
 
-    router.replace("/");
-
-    return;
-  }
-        }
-
-        setHasAccess(true);
-
-        await fetchQuestions();
-
-      } catch (error) {
-
-        console.error(error);
-
-        router.replace("/");
-
-      } finally {
-
-        setCheckingAccess(false);
-
-      }
-    };
-
-    checkAccess();
+    return () => unsubscribe();
 
   }, []);
 
@@ -402,13 +348,35 @@ if (isSubscribed) {
   const toggleBookmark = (
     id: string
   ) => {
-    setBookmarks((prev) =>
-      prev.includes(id)
-        ? prev.filter(
-          (b) => b !== id
-        )
-        : [...prev, id]
-    );
+
+    setBookmarks((prev) => {
+
+      const exists =
+        prev.some(
+          (b) =>
+            b.questionId === id &&
+            b.topicId === topicId
+        );
+
+      if (exists) {
+
+        return prev.filter(
+          (b) =>
+            !(
+              b.questionId === id &&
+              b.topicId === topicId
+            )
+        );
+      }
+
+      return [
+        ...prev,
+        {
+          questionId: id,
+          topicId,
+        },
+      ];
+    });
   };
 
   const toggleAnswer = async (
@@ -444,13 +412,6 @@ if (isSubscribed) {
       }
     }
   };
-
-  const toggleBookmarksView =
-    () => {
-      setShowBookmarksOnly(
-        (prev) => !prev
-      );
-    };
 
   const toggleLabel = (
     label: string
@@ -502,17 +463,9 @@ if (isSubscribed) {
           )
         );
 
-      const matchesBookmark =
-        !showBookmarksOnly ||
-        (q.id &&
-          bookmarks.includes(
-            q.id
-          ));
-
       return (
         matchesSearch &&
-        matchesLabel &&
-        matchesBookmark
+        matchesLabel
       );
     });
 
@@ -629,8 +582,10 @@ if (isSubscribed) {
                 );
 
               const isBookmarked =
-                bookmarks.includes(
-                  id
+                bookmarks.some(
+                  (b) =>
+                    b.questionId === id &&
+                    b.topicId === topicId
                 );
 
               return (
@@ -821,73 +776,6 @@ break-normal
 
       </div>
 
-
-      {/* ================= REVISE AI ================= */}
-
-      <div className="max-w-md mx-auto px-5 mt-6">
-
-        <div className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm">
-
-          <button
-            onClick={handleReviseAI}
-            disabled={loadingRevision}
-            className="w-full bg-black text-white py-3 rounded-2xl font-medium text-sm"
-          >
-            {loadingRevision
-              ? `Generating ${topicName} Revision...`
-              : `✨ Revise ${topicName} with 🪄 Study Genie`}
-          </button>
-
-          {showRevisionBox && (
-
-            <div className="mt-4 border border-gray-200 rounded-2xl bg-gray-50 overflow-hidden">
-
-              {/* HEADER */}
-
-              <div className="px-4 py-3 border-b bg-white font-semibold text-sm">
-                🪄 Study Genie
-              </div>
-
-              {/* CONTENT */}
-
-              <div
-                className="
-            h-[420px]
-            overflow-y-auto
-            p-4
-            leading-7
-            text-gray-700
-            whitespace-pre-wrap
-          "
-              >
-
-                {loadingRevision &&
-                  displayedRevision.length === 0 && (
-                    <div className="flex gap-1 items-center">
-
-                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" />
-
-                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0.2s]" />
-
-                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0.4s]" />
-
-                    </div>
-                  )}
-
-                <ReactMarkdown>
-                  {displayedRevision}
-                </ReactMarkdown>
-
-              </div>
-
-            </div>
-
-          )}
-
-        </div>
-
-      </div>
-
       {/* ================= FILTER ================= */}
 
       {showFilter && (
@@ -952,7 +840,7 @@ break-normal
 
       {/* ================= BOTTOM NAV ================= */}
 
-      <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-sm">
+      <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-sm z-40">
 
         <div className="max-w-md mx-auto flex items-center justify-around py-3">
 
@@ -990,21 +878,40 @@ break-normal
 
           </button>
 
-          {/* BOOKMARK */}
+          {/* AI CHAT */}
 
           <button
-            onClick={
-              toggleBookmarksView
+            onClick={() =>
+              router.push(
+                `/chat/${topicId}`
+              )
+            }
+            className="flex flex-col items-center justify-center text-cyan-600"
+          >
+
+            <Bot size={22} />
+
+            <span className="text-xs mt-1">
+              NAVIK BRO
+            </span>
+
+          </button>
+
+          {/* REVISION */}
+
+          <button
+            onClick={() =>
+              router.push(
+                `/revision/${topicId}`
+              )
             }
             className="flex flex-col items-center justify-center text-gray-500"
           >
 
-            <Bookmark size={22} />
+            <BookOpen size={22} />
 
             <span className="text-xs mt-1">
-              {showBookmarksOnly
-                ? "All"
-                : "Bookmarks"}
+              Revision
             </span>
 
           </button>
