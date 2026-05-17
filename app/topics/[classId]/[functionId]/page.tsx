@@ -29,6 +29,7 @@ import {
   BookOpen,
   ChevronRight,
   Home,
+  Bot,
   Bookmark,
   Filter,
   ShieldCheck,
@@ -843,6 +844,64 @@ select-none
             </span>
 
           </button>
+
+             {/* REVISION */}
+
+            <button
+              onClick={() =>
+                alert(
+                  "Revision available inside Questions Page"
+                )
+              }
+              className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
+            >
+
+              <div className="relative">
+
+              <BookOpen size={22} />
+
+               <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
+
+                <Lock size={8} />
+
+                 </div>
+
+              </div>
+
+              <span className="text-xs mt-1">
+                Revision
+              </span>
+
+            </button>
+
+            {/* AI CHAT */}
+
+            <button
+              onClick={() =>
+                alert(
+                  "Revision available inside Questions Page"
+                )
+              }
+              className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
+            >
+
+              <div className="relative">
+
+              <Bot size={22} />
+
+               <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
+
+                <Lock size={8} />
+
+                 </div>
+
+              </div>
+
+              <span className="text-xs mt-1">
+                Navik Bro
+              </span>
+
+            </button>
 
         </div>
 

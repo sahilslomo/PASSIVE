@@ -292,8 +292,7 @@ export default function ChatPage() {
 
                             <div
                                 key={i}
-                                className={`p-4 rounded-3xl whitespace-pre-wrap leading-7 ${
-                                    msg.role === "user"
+                                className={`p-4 rounded-3xl whitespace-pre-wrap leading-7 ${msg.role === "user"
                                         ? "bg-black text-white ml-10"
                                         : "bg-white border border-gray-200 mr-10"
                                     }`}
@@ -399,20 +398,6 @@ export default function ChatPage() {
 
                     </button>
 
-                    {/* CHAT */}
-
-                    <button
-                        className="flex flex-col items-center justify-center text-cyan-600"
-                    >
-
-                        <Bot size={22} />
-
-                        <span className="text-xs mt-1">
-                            NAVIK BRO
-                        </span>
-
-                    </button>
-
                     {/* REVISION */}
 
                     <button
@@ -428,6 +413,20 @@ export default function ChatPage() {
 
                         <span className="text-xs mt-1">
                             Revision
+                        </span>
+
+                    </button>
+
+                    {/* CHAT */}
+
+                    <button
+                        className="flex flex-col items-center justify-center text-cyan-600"
+                    >
+
+                        <Bot size={22} />
+
+                        <span className="text-xs mt-1">
+                            NAVIK BRO
                         </span>
 
                     </button>

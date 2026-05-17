@@ -18,6 +18,7 @@ import {
   Users,
   BookOpen,
   MessageCircleMore,
+  Bot,
 } from "lucide-react";
 
 import {
@@ -711,7 +712,7 @@ active:translate-y-[2px]
 
             <button className="flex flex-col items-center text-black font-semibold active:scale-95 transition-all duration-150">
 
-              <Home size={24} />
+              <Home size={22} />
 
               <span className="text-xs mt-1">
                 Home
@@ -732,7 +733,7 @@ active:translate-y-[2px]
 
               <div className="relative">
 
-                <Filter size={24} />
+                <Filter size={22} />
 
                 <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
 
@@ -761,7 +762,7 @@ active:translate-y-[2px]
 
               <div className="relative">
 
-                <Bookmark size={24} />
+                <Bookmark size={22} />
 
                 <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
 
@@ -773,6 +774,64 @@ active:translate-y-[2px]
 
               <span className="text-xs mt-1">
                 Bookmarks
+              </span>
+
+            </button>
+
+            {/* REVISION */}
+
+            <button
+              onClick={() =>
+                alert(
+                  "Revision available inside Questions Page"
+                )
+              }
+              className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
+            >
+
+              <div className="relative">
+
+              <BookOpen size={22} />
+
+               <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
+
+                <Lock size={8} />
+
+                 </div>
+
+              </div>
+
+              <span className="text-xs mt-1">
+                Revision
+              </span>
+
+            </button>
+
+            {/* AI CHAT */}
+
+            <button
+              onClick={() =>
+                alert(
+                  "Revision available inside Questions Page"
+                )
+              }
+              className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
+            >
+
+              <div className="relative">
+
+              <Bot size={22} />
+
+               <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
+
+                <Lock size={8} />
+
+                 </div>
+
+              </div>
+
+              <span className="text-xs mt-1">
+                Navik Bro
               </span>
 
             </button>

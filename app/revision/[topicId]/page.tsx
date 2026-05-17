@@ -948,6 +948,20 @@ break-normal
 
                     </button>
 
+                    {/* REVISION */}
+
+                    <button
+                        className="flex flex-col items-center justify-center text-cyan-600"
+                    >
+
+                        <BookOpen size={22} />
+
+                        <span className="text-xs mt-1">
+                            Revision
+                        </span>
+
+                    </button>
+
                     {/* CHAT */}
 
                     <button
@@ -963,20 +977,6 @@ break-normal
 
                         <span className="text-xs mt-1">
                             NAVIK BRO
-                        </span>
-
-                    </button>
-
-                    {/* REVISION */}
-
-                    <button
-                        className="flex flex-col items-center justify-center text-cyan-600"
-                    >
-
-                        <BookOpen size={22} />
-
-                        <span className="text-xs mt-1">
-                            Revision
                         </span>
 
                     </button>
