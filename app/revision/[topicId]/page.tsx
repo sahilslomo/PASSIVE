@@ -348,8 +348,20 @@ LOAD TOPIC
 
                             body: JSON.stringify({
                                 topicId,
-                                questions,
-                                transcripts,
+
+                                questions:
+                                    (
+                                        useAllQuestions ||
+                                        useBookmarks
+                                    )
+                                        ? questions
+                                        : [],
+
+                                transcripts:
+                                    useTranscripts
+                                        ? transcripts
+                                        : [],
+
                                 uploadedFiles:
                                     useUploadedFiles
                                         ? files
@@ -357,7 +369,7 @@ LOAD TOPIC
                             }),
                         }
                     );
-
+                    
                 if (!response.body) return;
 
                 const reader =
@@ -607,7 +619,7 @@ LOAD TOPIC
 
                         <p className="text-gray-500 mt-2 leading-6">
 
-                           {" "}
+                            {" "}
 
                             <span className="font-semibold text-black">
                                 {topicName}
