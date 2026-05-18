@@ -118,6 +118,9 @@ export default function QuestionsPage() {
   const [showRevisionBox, setShowRevisionBox] =
     useState(false);
 
+  const [pageLoading, setPageLoading] =
+    useState(false);
+
   const handleReviseAI = async () => {
 
     try {
@@ -132,7 +135,7 @@ export default function QuestionsPage() {
       console.log("FINAL QUESTIONS:", questions);
       console.log("TOPIC ID:", topicId);
 
-      const response = await fetch("/api/revise", {
+      const response = await fetch("/api/questions-revise", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -552,6 +555,10 @@ export default function QuestionsPage() {
     return <LoadingScreen />;
   }
 
+  if (pageLoading) {
+    return <LoadingScreen />;
+  }
+
   if (!hasAccess) {
     return null;
   }
@@ -570,9 +577,32 @@ export default function QuestionsPage() {
           <div className="flex items-center justify-between mb-6">
 
             <button
-              onClick={() =>
-                router.back()
-              }
+              onClick={async () => {
+
+                const topicRef = doc(
+                  db,
+                  "topics",
+                  topicId
+                );
+
+                const topicSnap =
+                  await getDoc(topicRef);
+
+                if (!topicSnap.exists()) return;
+
+                const topicData =
+                  topicSnap.data();
+
+                const classId =
+                  topicData.classId;
+
+                const functionId =
+                  topicData.functionId;
+
+                router.push(
+                  `/topics/${classId}/${functionId}`
+                );
+              }}
               className="w-11 h-11 rounded-2xl border border-gray-200 bg-white flex items-center justify-center"
             >
               <ArrowLeft size={20} />
@@ -848,35 +878,35 @@ break-normal
 
 
       {/* ================= REVISE AI ================= */}
+      {!showBookmarksOnly && (
+        <div className="max-w-md mx-auto px-5 mt-6">
 
-      <div className="max-w-md mx-auto px-5 mt-6">
+          <div className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm">
 
-        <div className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm">
+            <button
+              onClick={handleReviseAI}
+              disabled={loadingRevision}
+              className="w-full bg-black text-white py-3 rounded-2xl font-medium text-sm"
+            >
+              {loadingRevision
+                ? `Generating ${topicName} Revision...`
+                : `✨ Revise ${topicName} with 🪄 Study Genie`}
+            </button>
 
-          <button
-            onClick={handleReviseAI}
-            disabled={loadingRevision}
-            className="w-full bg-black text-white py-3 rounded-2xl font-medium text-sm"
-          >
-            {loadingRevision
-              ? `Generating ${topicName} Revision...`
-              : `✨ Revise ${topicName} with 🪄 Study Genie`}
-          </button>
+            {showRevisionBox && (
 
-          {showRevisionBox && (
+              <div className="mt-4 border border-gray-200 rounded-2xl bg-gray-50 overflow-hidden">
 
-            <div className="mt-4 border border-gray-200 rounded-2xl bg-gray-50 overflow-hidden">
+                {/* HEADER */}
 
-              {/* HEADER */}
+                <div className="px-4 py-3 border-b bg-white font-semibold text-sm">
+                  🪄 Study Genie
+                </div>
 
-              <div className="px-4 py-3 border-b bg-white font-semibold text-sm">
-                🪄 Study Genie
-              </div>
+                {/* CONTENT */}
 
-              {/* CONTENT */}
-
-              <div
-                className="
+                <div
+                  className="
             h-[420px]
             overflow-y-auto
             p-4
@@ -884,35 +914,36 @@ break-normal
             text-gray-700
             whitespace-pre-wrap
           "
-              >
+                >
 
-                {loadingRevision &&
-                  displayedRevision.length === 0 && (
-                    <div className="flex gap-1 items-center">
+                  {loadingRevision &&
+                    displayedRevision.length === 0 && (
+                      <div className="flex gap-1 items-center">
 
-                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" />
+                        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" />
 
-                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0.2s]" />
+                        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0.2s]" />
 
-                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0.4s]" />
+                        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0.4s]" />
 
-                    </div>
-                  )}
+                      </div>
+                    )}
 
-                <ReactMarkdown>
-                  {displayedRevision}
-                </ReactMarkdown>
+                  <ReactMarkdown>
+                    {displayedRevision}
+                  </ReactMarkdown>
+
+                </div>
 
               </div>
 
-            </div>
+            )}
 
-          )}
+          </div>
 
         </div>
-
-      </div>
-
+      )}
+      
       {/* ================= FILTER ================= */}
 
       {showFilter && (
@@ -1051,10 +1082,14 @@ break-normal
           {/* REVISION */}
 
           <button
-            onClick={() =>
+            onClick={() => {
+
+              setPageLoading(true);
+
               router.push(
                 `/revision/${topicId}`
-              )
+              );
+            }
             }
             className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
           >
@@ -1074,11 +1109,14 @@ break-normal
           {/* AI CHAT */}
 
           <button
-            onClick={() =>
+            onClick={() => {
+
+              setPageLoading(true);
+
               router.push(
                 `/chat/${topicId}`
-              )
-            }
+              );
+            }}
             className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
           >
             <div className="relative">

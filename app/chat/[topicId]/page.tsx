@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useParams, useRouter }
     from "next/navigation";
@@ -13,6 +13,23 @@ import {
     Bot,
     MessageCircle,
 } from "lucide-react";
+
+import {
+    doc,
+    getDoc,
+} from "firebase/firestore";
+
+import { db }
+    from "@/lib/firebase";
+
+
+
+import {
+    getStudyFilesByTopic,
+    LocalStudyFile,
+} from "@/lib/localFiles";
+
+import LoadingScreen from "@/components/LoadingScreen";
 
 export default function ChatPage() {
 
@@ -33,8 +50,14 @@ export default function ChatPage() {
     const [useLocalFiles, setUseLocalFiles] =
         useState(true);
 
+    const [pageLoading, setPageLoading] =
+        useState(true);
+
     const topicId =
         params.topicId as string;
+
+    const [topicName, setTopicName] =
+        useState("");
 
     const [message, setMessage] =
         useState("");
@@ -49,6 +72,9 @@ export default function ChatPage() {
 
     const [loading, setLoading] =
         useState(false);
+
+    const [localFiles, setLocalFiles] =
+        useState<LocalStudyFile[]>([]);
 
     const sendMessage =
         async () => {
@@ -96,7 +122,10 @@ export default function ChatPage() {
                                 useGlobalFiles,
                                 useLocalFiles,
 
-                                uploadedFiles: [],
+                                uploadedFiles:
+                                    useLocalFiles
+                                        ? localFiles
+                                        : [],
                             }),
                         }
                     );
@@ -133,6 +162,59 @@ export default function ChatPage() {
             }
         };
 
+
+
+    useEffect(() => {
+
+        const loadData = async () => {
+
+            try {
+
+                /* LOCAL FILES */
+
+                const files =
+                    await getStudyFilesByTopic(
+                        topicId
+                    );
+
+                setLocalFiles(files);
+
+                /* TOPIC */
+
+                const topicRef =
+                    doc(
+                        db,
+                        "topics",
+                        topicId
+                    );
+
+                const topicSnap =
+                    await getDoc(topicRef);
+
+                if (topicSnap.exists()) {
+
+                    const data =
+                        topicSnap.data();
+
+                    setTopicName(
+                        data.title || ""
+                    );
+                }
+
+            } finally {
+
+                setPageLoading(false);
+            }
+        };
+
+        loadData();
+
+    }, [topicId]);
+
+    if (loading || pageLoading) {
+        return <LoadingScreen />;
+    }
+    
     return (
 
         <main className="min-h-screen bg-[#f5f5f5] text-black pb-40">
@@ -175,7 +257,7 @@ export default function ChatPage() {
                     <div>
 
                         <h1 className="text-3xl font-bold leading-tight">
-                            AI Chat
+                            {topicName}
                         </h1>
 
                         <p className="text-gray-500 mt-2 leading-6">

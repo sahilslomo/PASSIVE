@@ -12,6 +12,8 @@ import {
     query,
     where,
     getDocs,
+    doc,
+    getDoc,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -19,6 +21,7 @@ import { db } from "@/lib/firebase";
 import {
     saveStudyFile,
     getStudyFilesByTopic,
+    deleteStudyFile,
     LocalStudyFile,
 } from "@/lib/localFiles";
 
@@ -49,6 +52,8 @@ type Question = {
     a?: string;
 };
 
+import LoadingScreen from "@/components/LoadingScreen";
+
 export default function RevisionPage() {
 
     const params = useParams();
@@ -58,8 +63,14 @@ export default function RevisionPage() {
     const topicId =
         params.topicId as string;
 
+    const [topicName, setTopicName] =
+        useState("Topic");
+
     const [loading, setLoading] =
         useState(false);
+
+    const [pageLoading, setPageLoading] =
+        useState(true);
 
     const [files, setFiles] =
         useState<LocalStudyFile[]>([]);
@@ -100,6 +111,40 @@ export default function RevisionPage() {
         approveLoading,
         setApproveLoading,
     ] = useState<string | null>(null);
+
+    const [selectedFileId, setSelectedFileId] =
+        useState("");
+
+
+    /* =========================
+LOAD TOPIC
+========================= */
+
+    const loadTopic = async () => {
+
+        try {
+
+            const topicRef =
+                doc(db, "topics", topicId);
+
+            const topicSnap =
+                await getDoc(topicRef);
+
+            if (topicSnap.exists()) {
+
+                const topicData =
+                    topicSnap.data();
+
+                setTopicName(
+                    topicData.title || "Topic"
+                );
+            }
+
+        } finally {
+
+            setPageLoading(false);
+        }
+    };
 
     /* =========================
        LOAD FILES
@@ -201,6 +246,8 @@ export default function RevisionPage() {
         loadFiles();
 
         loadBookmarkedQuestions();
+
+        loadTopic();
 
     }, []);
 
@@ -354,6 +401,8 @@ export default function RevisionPage() {
             }
         };
 
+
+
     /* =========================
        APPROVAL
     ========================= */
@@ -419,6 +468,22 @@ export default function RevisionPage() {
 
             }
         };
+
+    const deleteFile = async () => {
+
+        if (!selectedFileId) return;
+
+        await deleteStudyFile(
+            selectedFileId
+        );
+
+        await loadFiles();
+
+        setSelectedFileId("");
+
+        alert("File deleted");
+    };
+
 
     /* =========================
        PDF UPLOAD
@@ -491,11 +556,15 @@ export default function RevisionPage() {
             }
         };
 
+    if (pageLoading) {
+        return <LoadingScreen />;
+    }
+
     return (
 
         <main className="min-h-screen bg-[#f5f5f5] text-black pb-32">
 
-            <div className="max-w-md mx-auto px-5 pt-5">
+            <div className="max-w-md mx-auto px-5 pt-5 pb-10">
 
                 {/* HEADER */}
 
@@ -533,11 +602,17 @@ export default function RevisionPage() {
                     <div>
 
                         <h1 className="text-3xl font-bold leading-tight">
-                            AI Revision
+                            Revision
                         </h1>
 
                         <p className="text-gray-500 mt-2 leading-6">
-                            Revise smarter using AI generated notes.
+
+                           {" "}
+
+                            <span className="font-semibold text-black">
+                                {topicName}
+                            </span>
+
                         </p>
 
                         <div className="mt-5 border-l-4 border-cyan-500 pl-4">
@@ -557,149 +632,11 @@ export default function RevisionPage() {
 
                 </div>
 
-                {/* BOOKMARKED QUESTIONS */}
-
-                {bookmarkedQuestions.length > 0 && (
-
-                    <div className="bg-white rounded-3xl border p-5 mb-5">
-
-                        <h2 className="text-lg font-bold mb-4">
-                            ⭐ Bookmarked Questions
-                        </h2>
-
-                        <div className="space-y-4">
-
-                            {bookmarkedQuestions.map((q, i) => {
-
-                                const isOpen =
-                                    openAnswers.includes(q.id!);
-
-                                return (
-
-                                    <div
-                                        key={q.id}
-                                        className="border rounded-2xl p-4"
-                                    >
-
-                                        {/* QUESTION */}
-
-                                        <div
-                                            className="cursor-pointer"
-                                            onClick={() =>
-                                                setOpenAnswers((prev) =>
-                                                    prev.includes(q.id!)
-                                                        ? prev.filter(
-                                                            (id) => id !== q.id
-                                                        )
-                                                        : [...prev, q.id!]
-                                                )
-                                            }
-                                        >
-
-                                            <p className="font-semibold">
-                                                Question {i + 1}
-                                            </p>
-
-                                            <p className="mt-2 text-gray-700 leading-7">
-                                                {q.question || q.q}
-                                            </p>
-
-                                        </div>
-
-                                        {/* ANSWER */}
-
-                                        {isOpen && (
-
-                                            <div className="mt-4 bg-gray-50 border border-gray-200 p-4 rounded-2xl">
-
-                                                <p className="font-semibold mb-3">
-                                                    Answer:
-                                                </p>
-
-                                                <div
-                                                    className="
-w-full
-min-w-0
-text-gray-700
-leading-7
-whitespace-normal
-max-w-full
-overflow-hidden
-break-normal
-
-[&_p]:mb-4
-[&_li]:mb-2
-
-[&_strong]:font-bold
-
-[&_img]:max-w-full
-[&_img]:h-auto
-
-[&_pre]:overflow-x-auto
-
-[&_table]:block
-[&_table]:overflow-x-auto
-
-[&_h1]:text-3xl
-[&_h1]:font-bold
-[&_h1]:mb-4
-
-[&_h2]:text-2xl
-[&_h2]:font-semibold
-[&_h2]:mt-6
-[&_h2]:mb-3
-
-[&_ul]:list-disc
-[&_ul]:pl-6
-[&_ul]:mb-4
-
-[&_ol]:list-decimal
-[&_ol]:pl-6
-
-[&_blockquote]:border-l-4
-[&_blockquote]:pl-4
-[&_blockquote]:italic
-"
-                                                    dangerouslySetInnerHTML={{
-                                                        __html:
-                                                            typeof (q.answer || q.a) === "string" &&
-                                                                (
-                                                                    (q.answer || q.a)?.includes("<p") ||
-                                                                    (q.answer || q.a)?.includes("<strong") ||
-                                                                    (q.answer || q.a)?.includes("<ul") ||
-                                                                    (q.answer || q.a)?.includes("<ol") ||
-                                                                    (q.answer || q.a)?.includes("<div")
-                                                                )
-                                                                ? (q.answer || q.a)!.replace(/&nbsp;/g, " ")
-                                                                : (q.answer || q.a)!.replace(/\n/g, "<br/>"),
-                                                    }}
-                                                />
-
-                                            </div>
-
-                                        )}
-
-                                    </div>
-
-                                );
-                            })}
-
-                        </div>
-
-                    </div>
-
-                )}
                 {/* PDF UPLOAD */}
 
                 <div className="bg-white rounded-3xl border border-gray-200 p-5 mb-5">
 
                     <div className="flex items-center gap-3 mb-5">
-
-                        <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center">
-
-                            <Upload size={22} />
-
-                        </div>
 
                         <div>
 
@@ -715,11 +652,42 @@ break-normal
 
                     </div>
 
-                    <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={handlePdfUpload}
-                    />
+                    <label className="w-full">
+
+                        <div className="w-full border border-gray-200 rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition">
+
+                            <div className="flex items-center gap-3">
+
+                                <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center">
+
+                                    <Upload size={18} />
+
+                                </div>
+
+                                <div>
+
+                                    <p className="font-medium text-sm">
+                                        Choose PDF File
+                                    </p>
+
+                                    <p className="text-xs text-gray-500">
+                                        No file chosen
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <input
+                            type="file"
+                            accept=".pdf"
+                            onChange={handlePdfUpload}
+                            className="hidden"
+                        />
+
+                    </label>
 
                     {loading && (
 
@@ -730,6 +698,92 @@ break-normal
                     )}
 
                 </div>
+
+                {/* UPLOADED FILES */}
+
+                {files.length > 0 && (
+
+                    <div className="bg-white rounded-3xl border border-gray-200 p-5 mb-5">
+
+                        <h2 className="font-bold mb-4">
+                            Send PDFs for ADMIN'S APPROVAL to improve AI Revision.
+                        </h2>
+
+                        {/* DROPDOWN */}
+
+                        <select
+                            value={selectedFileId}
+                            onChange={(e) =>
+                                setSelectedFileId(
+                                    e.target.value
+                                )
+                            }
+                            className="w-full border border-gray-200 rounded-2xl p-3 outline-none"
+                        >
+
+                            <option value="">
+                                Select Uploaded File
+                            </option>
+
+                            {files.map((file) => (
+
+                                <option
+                                    key={file.id}
+                                    value={file.id}
+                                >
+                                    {file.name}
+                                </option>
+
+                            ))}
+
+                        </select>
+
+                        {/* ACTION BUTTONS */}
+
+                        {selectedFileId && (
+
+                            <div className="flex gap-3 mt-4">
+
+                                {/* APPROVAL */}
+
+                                <button
+                                    onClick={() => {
+
+                                        const file =
+                                            files.find(
+                                                (f) =>
+                                                    f.id === selectedFileId
+                                            );
+
+                                        if (file) {
+                                            requestGlobalApproval(file);
+                                        }
+                                    }}
+                                    className="flex-1 bg-black text-white py-3 rounded-2xl text-sm"
+                                >
+
+                                    Send For Approval
+
+                                </button>
+
+                                {/* DELETE */}
+
+                                <button
+                                    onClick={deleteFile}
+                                    className="flex-1 border border-red-200 text-red-600 py-3 rounded-2xl text-sm"
+                                >
+
+                                    Delete
+
+                                </button>
+
+                            </div>
+
+                        )}
+
+                    </div>
+
+                )}
 
                 {/* SOURCES */}
 
@@ -817,95 +871,98 @@ break-normal
 
                 </div>
 
+
                 {/* GENERATE */}
 
-                <div className="bg-white rounded-3xl border border-gray-200 p-5 mb-5">
+                <div className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm mb-5">
 
                     <button
                         onClick={generateRevision}
                         disabled={generating}
-                        className="bg-black text-white px-5 py-4 rounded-2xl w-full font-medium"
+                        className="w-full bg-black text-white py-3 rounded-2xl font-medium text-sm"
                     >
 
                         {generating
-                            ? "Generating..."
-                            : "✨ Revise With Study Genie"}
+                            ? "Generating Revision..."
+                            : "✨ Revise With 🪄 Study Genie"}
 
                     </button>
 
-                </div>
+                    {revision && (
 
-                {/* REVISION OUTPUT */}
+                        <div className="mt-4 border border-gray-200 rounded-2xl bg-gray-50 overflow-hidden">
 
-                {revision && (
+                            {/* HEADER */}
 
-                    <div className="bg-white border border-gray-200 rounded-3xl p-5 mb-5 whitespace-pre-wrap leading-7">
+                            <div className="px-4 py-3 border-b bg-white font-semibold text-sm">
 
-                        {revision}
+                                🪄 Study Genie
 
-                    </div>
+                            </div>
 
-                )}
+                            {/* CONTENT */}
 
-                {/* FILES */}
+                            <div
+                                className="
+h-[420px]
+overflow-y-auto
+p-4
+leading-7
+text-gray-700
+whitespace-pre-wrap
 
-                <div className="space-y-4 mb-10">
+[&_h1]:text-3xl
+[&_h1]:font-bold
+[&_h1]:mb-4
 
-                    {files.map((file) => (
+[&_h2]:text-2xl
+[&_h2]:font-semibold
+[&_h2]:mt-6
+[&_h2]:mb-3
 
-                        <div
-                            key={file.id}
-                            className="bg-white border border-gray-200 rounded-3xl p-5"
-                        >
+[&_p]:mb-4
 
-                            <div className="flex items-start gap-3">
+[&_ul]:list-disc
+[&_ul]:pl-6
+[&_ul]:mb-4
 
-                                <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shrink-0">
+[&_ol]:list-decimal
+[&_ol]:pl-6
 
-                                    <FileText size={22} />
+[&_li]:mb-2
 
-                                </div>
+[&_strong]:font-bold
+"
+                            >
 
-                                <div className="flex-1 min-w-0">
+                                {generating &&
+                                    revision.length === 0 && (
 
-                                    <h2 className="font-semibold break-words">
-                                        {file.name}
-                                    </h2>
+                                        <div className="flex gap-1 items-center">
 
-                                    <p className="text-sm text-gray-500 mt-2">
+                                            <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" />
 
-                                        Extracted Characters:
-                                        {" "}
-                                        {file.extractedText.length}
+                                            <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0.2s]" />
 
-                                    </p>
+                                            <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0.4s]" />
+
+                                        </div>
+
+                                    )}
+
+                                <div className="prose prose-sm max-w-none">
+
+                                    {revision}
 
                                 </div>
 
                             </div>
 
-                            <button
-                                onClick={() =>
-                                    requestGlobalApproval(file)
-                                }
-                                disabled={
-                                    approveLoading === file.id
-                                }
-                                className="mt-5 bg-black text-white px-4 py-3 rounded-2xl text-sm w-full"
-                            >
-
-                                {approveLoading === file.id
-                                    ? "Sending..."
-                                    : "Request Global Approval"}
-
-                            </button>
-
                         </div>
 
-                    ))}
+                    )}
 
                 </div>
-
             </div>
 
             {/* BOTTOM NAV */}

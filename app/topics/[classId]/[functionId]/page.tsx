@@ -269,7 +269,7 @@ export default function TopicsPage() {
         const isSubscribed =
           data?.isSubscribed || false;
 
-          setIsSubscribed(isSubscribed);
+        setIsSubscribed(isSubscribed);
 
         const clicks =
           data?.topicClicks || 0;
@@ -285,65 +285,64 @@ export default function TopicsPage() {
 
         // CLASS ACCESS PROTECTION
 
-       if (isSubscribed) {
+        if (isSubscribed) {
 
-  const subscriptionExpired =
-    Date.now() > subscriptionEndsAt;
+          const subscriptionExpired =
+            Date.now() > subscriptionEndsAt;
 
-  // SUBSCRIPTION EXPIRED
+          // SUBSCRIPTION EXPIRED
 
-  if (subscriptionExpired) {
+          if (subscriptionExpired) {
 
-    await updateDoc(userRef, {
-      isSubscribed: false,
-    });
+            await updateDoc(userRef, {
+              isSubscribed: false,
+            });
 
-    setHasClassAccess(false);
+            setHasClassAccess(false);
 
-    setTrialExpired(true);
+            setTrialExpired(true);
 
-    setSubscriptionMessage(
-      "Your subscription has expired"
-    );
+            setSubscriptionMessage(
+              "Your subscription has expired"
+            );
 
-    setShowContinueTrial(false);
+            setShowContinueTrial(false);
 
-    setShowSubscriptionModal(true);
+            setShowSubscriptionModal(true);
 
-    return;
-  }
+            return;
+          }
 
-  // CHECK CLASS ACCESS
+          // CHECK CLASS ACCESS
 
-  const hasAccess =
-    subscribedClasses.includes(classId);
+          const hasAccess =
+            subscribedClasses.includes(classId);
 
-  // USER DOES NOT HAVE THIS CLASS
+          // USER DOES NOT HAVE THIS CLASS
 
-  if (!hasAccess) {
+          if (!hasAccess) {
 
-    setHasClassAccess(false);
+            setHasClassAccess(false);
 
-    setSubscriptionMessage(
-      `Your subscription is active for ${
-        subscribedClasses[0] === "class2"
-          ? "MEO CLASS 2"
-          : "MEO CLASS 4"
-      } only.`
-    );
+            setSubscriptionMessage(
+              `Your subscription is active for ${subscribedClasses[0] === "class2"
+                ? "MEO CLASS 2"
+                : "MEO CLASS 4"
+              } only.`
+            );
 
-    setShowContinueTrial(false);
+            setShowContinueTrial(false);
 
-    setShowSubscriptionModal(true);
+            setShowSubscriptionModal(true);
 
-    return;
-  }
+            return;
+          }
 
-  // USER HAS ACCESS
+          // USER HAS ACCESS
 
-  setHasClassAccess(true);
+          setHasClassAccess(true);
 
-  setShowSubscriptionModal(false);
+          setShowSubscriptionModal(false);
 
 
         } else {
@@ -497,13 +496,13 @@ export default function TopicsPage() {
 
     // POPUP TRIGGERS
 
-  const shouldShowPopup =
-  !isSubscribed &&
-  (
-    newClicks === 1 ||
-    newClicks === 10 ||
-    newClicks === 50
-  );
+    const shouldShowPopup =
+      !isSubscribed &&
+      (
+        newClicks === 1 ||
+        newClicks === 10 ||
+        newClicks === 50
+      );
 
     // FIRESTORE IN BACKGROUND
 
@@ -556,7 +555,7 @@ export default function TopicsPage() {
 
             <button
               onClick={() =>
-                router.back()
+                router.push("/")
               }
               className="w-11 h-11 rounded-2xl border border-gray-200 bg-white flex items-center justify-center"
             >
@@ -845,63 +844,63 @@ select-none
 
           </button>
 
-             {/* REVISION */}
+          {/* REVISION */}
 
-            <button
-              onClick={() =>
-                alert(
-                  "Revision available inside Questions Page"
-                )
-              }
-              className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
-            >
+          <button
+            onClick={() =>
+              alert(
+                "Revision available inside Questions Page"
+              )
+            }
+            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
+          >
 
-              <div className="relative">
+            <div className="relative">
 
               <BookOpen size={22} />
 
-               <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
+              <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
 
                 <Lock size={8} />
 
-                 </div>
-
               </div>
 
-              <span className="text-xs mt-1">
-                Revision
-              </span>
+            </div>
 
-            </button>
+            <span className="text-xs mt-1">
+              Revision
+            </span>
 
-            {/* AI CHAT */}
+          </button>
 
-            <button
-              onClick={() =>
-                alert(
-                  "Revision available inside Questions Page"
-                )
-              }
-              className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
-            >
+          {/* AI CHAT */}
 
-              <div className="relative">
+          <button
+            onClick={() =>
+              alert(
+                "Revision available inside Questions Page"
+              )
+            }
+            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
+          >
+
+            <div className="relative">
 
               <Bot size={22} />
 
-               <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
+              <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
 
                 <Lock size={8} />
 
-                 </div>
-
               </div>
 
-              <span className="text-xs mt-1">
-                Navik Bro
-              </span>
+            </div>
 
-            </button>
+            <span className="text-xs mt-1">
+              Navik Bro
+            </span>
+
+          </button>
 
         </div>
 
