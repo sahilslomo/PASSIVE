@@ -114,71 +114,84 @@ export async function POST(
            SAVE CHUNKS + EMBEDDINGS
         ========================= */
 
-        for (
-            let i = 0;
-            i < chunks.length;
-            i++
-        ) {
+       for (
+    let i = 0;
+    i < chunks.length;
+    i++
+) {
 
-            console.log(
-                "PROCESSING CHUNK:",
-                i
-            );
-
-            const embeddingResponse =
-                await openai.embeddings.create({
-                    model:
-                        "text-embedding-3-small",
-
-                    input:
-                        chunks[i],
-                });
-
-            const embedding =
-                embeddingResponse
-                    .data[0]
-                    .embedding;
-
-            console.log(
-                "EMBEDDING LENGTH:",
-                embedding.length
-            );
-
-            console.log(
-                "SAVING CHUNK:",
-                i
-            );
-
-            await adminDb
-                .collection(
-                    "globalFileChunks"
-                )
-                .add({
-                    globalFileId:
-                        globalFileRef.id,
-
-                    topicId:
-                        data?.topicId,
-
-                    fileName:
-                        data?.fileName,
-
-                    chunkIndex: i,
-
-                    text:
-                        chunks[i],
-
-                    embedding:
-                        embedding,
-
-                    createdAt:
-                        Date.now(),
-                });
-        }
+    try {
 
         console.log(
-            "ALL CHUNKS SAVED"
+            "PROCESSING CHUNK:",
+            i
         );
+
+        const embeddingResponse =
+            await openai.embeddings.create({
+                model:
+                    "text-embedding-3-small",
+
+                input:
+                    chunks[i],
+            });
+
+        const embedding =
+            embeddingResponse
+                .data[0]
+                .embedding;
+
+        console.log(
+            "EMBEDDING LENGTH:",
+            embedding.length
+        );
+
+        console.log(
+            "SAVING CHUNK:",
+            i
+        );
+
+        await adminDb
+            .collection(
+                "globalFileChunks"
+            )
+            .add({
+                globalFileId:
+                    globalFileRef.id,
+
+                topicId:
+                    data?.topicId,
+
+                fileName:
+                    data?.fileName,
+
+                chunkIndex: i,
+
+                text:
+                    chunks[i],
+
+                embedding:
+                    embedding,
+
+                createdAt:
+                    Date.now(),
+            });
+
+        console.log(
+            "CHUNK SAVED:",
+            i
+        );
+
+    } catch (error) {
+
+        console.error(
+            "CHUNK FAILED:",
+            i,
+            error
+        );
+    }
+}
+       
 
         /* =========================
            MARK APPROVED
