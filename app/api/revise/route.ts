@@ -34,23 +34,29 @@ export async function POST(req: Request) {
             transcript,
             transcripts = [],
             uploadedFiles = [],
+            useGlobalFiles = false,
             topicId,
         } = body;
 
-        const globalFilesSnap =
-            await adminDb
-                .collection("globalFiles")
-                .where(
-                    "topicId",
-                    "==",
-                    topicId
-                )
-                .get();
+        let globalFiles: any[] = [];
 
-        const globalFiles =
-            globalFilesSnap.docs.map(
-                (doc) => doc.data()
-            );
+        if (useGlobalFiles) {
+
+            const globalFilesSnap =
+                await adminDb
+                    .collection("globalFiles")
+                    .where(
+                        "topicId",
+                        "==",
+                        topicId
+                    )
+                    .get();
+
+            globalFiles =
+                globalFilesSnap.docs.map(
+                    (doc) => doc.data()
+                );
+        }
 
         console.log(
             "🌍 GLOBAL FILES:",
@@ -174,7 +180,7 @@ ${globalFilesText}
             )
             .digest("hex");
 
-        const cacheKey = `${topicId}_${transcriptHash}_${questionHash}`;
+        const cacheKey = `${topicId}_${transcriptHash}_${questionHash}_${uploadedFiles.length}_${useGlobalFiles}`;
 
         console.log("🧠 CACHE KEY:", cacheKey);
 
@@ -197,36 +203,36 @@ ${globalFilesText}
         ========================= */
 
         const prompt = `
-You are an expert AI revision assistant.
+You are Navik AI Revision Assistant.
 
-Use ALL provided learning context to generate the best possible revision notes.
+Generate revision notes ONLY using the learning material provided below.
 
-You are given:
-1. Transcript
-2. Topic summary
-3. Notes
-4. Questions and answers
+Important:
+- Do NOT assume missing knowledge
+- Use ONLY the supplied sources
+- If some sections are missing, continue with available material
+- Prioritize clarity and exam preparation
 
-Generate:
-- comprehensive revision notes
-- key concepts
-- concise explanations
-- memory tricks
-- exam-focused preparation
-- quick revision bullets
-- structured understanding
+Your tasks:
+- create structured revision notes
+- explain difficult concepts simply
+- generate quick revision bullets
+- highlight important facts
+- create memory tricks where possible
+- summarize efficiently
+- improve retention
 
-TRANSCRIPT:
-${combinedTranscript}
+TRANSCRIPTS:
+${combinedTranscript || "No transcripts provided."}
 
-QUESTIONS:
-${formattedQuestions}
+QUESTIONS AND ANSWERS:
+${formattedQuestions || "No questions provided."}
 
-UPLOADED STUDY FILES:
-${combinedFilesText}
+UPLOADED FILES:
+${combinedFilesText || "No uploaded files provided."}
 
-Generate structured revision notes.
-        `;
+Generate smart structured revision notes.
+`;
 
         /* =========================
            DEBUG: PROMPT SIZE

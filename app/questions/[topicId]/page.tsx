@@ -907,7 +907,7 @@ break-normal
 
                 <div
                   className="
-            h-[420px]
+            h-[720px]
             overflow-y-auto
             p-4
             leading-7

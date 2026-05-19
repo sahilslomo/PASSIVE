@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+
+import { useEffect, useState, useRef } from "react";
 
 import { useParams, useRouter }
     from "next/navigation";
@@ -76,21 +78,30 @@ export default function ChatPage() {
     const [localFiles, setLocalFiles] =
         useState<LocalStudyFile[]>([]);
 
+    const messagesEndRef =
+        useRef<HTMLDivElement | null>(null);
+
     const sendMessage =
         async () => {
 
-            if (!message.trim() || loading)
-                return;
+            if (
+                !message.trim() ||
+                loading
+            ) return;
+
+            setLoading(true);
 
             const userMessage = {
                 role: "user",
                 content: message,
             };
 
-            setMessages((prev) => [
-                ...prev,
+            const updatedMessages = [
+                ...messages,
                 userMessage,
-            ]);
+            ];
+
+            setMessages(updatedMessages);
 
             const currentMessage =
                 message;
@@ -98,8 +109,6 @@ export default function ChatPage() {
             setMessage("");
 
             try {
-
-                setLoading(true);
 
                 const response =
                     await fetch(
@@ -117,6 +126,11 @@ export default function ChatPage() {
                                 message:
                                     currentMessage,
 
+                                messages: [
+                                    ...messages,
+                                    userMessage,
+                                ],
+
                                 useQuestions,
                                 useTranscripts,
                                 useGlobalFiles,
@@ -133,6 +147,14 @@ export default function ChatPage() {
                 const data =
                     await response.json();
 
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.error ||
+                        "Request failed"
+                    );
+                }
+
                 setMessages((prev) => [
                     ...prev,
                     {
@@ -143,7 +165,7 @@ export default function ChatPage() {
                     },
                 ]);
 
-            } catch (error) {
+            } catch (error: any) {
 
                 console.error(error);
 
@@ -152,6 +174,7 @@ export default function ChatPage() {
                     {
                         role: "assistant",
                         content:
+                            error.message ||
                             "Something went wrong.",
                     },
                 ]);
@@ -211,10 +234,19 @@ export default function ChatPage() {
 
     }, [topicId]);
 
-    if (loading || pageLoading) {
+    useEffect(() => {
+
+        messagesEndRef.current
+            ?.scrollIntoView({
+                behavior: "smooth",
+            });
+
+    }, [messages, loading]);
+
+    if (pageLoading) {
         return <LoadingScreen />;
     }
-    
+
     return (
 
         <main className="min-h-screen bg-[#f5f5f5] text-black pb-40">
@@ -376,13 +408,72 @@ export default function ChatPage() {
 
                             <div
                                 key={i}
-                                className={`p-4 rounded-3xl whitespace-pre-wrap leading-7 ${msg.role === "user"
+                                className={`p-4 rounded-3xl leading-7 ${msg.role === "user"
                                     ? "bg-black text-white ml-10"
                                     : "bg-white border border-gray-200 mr-10"
                                     }`}
                             >
 
-                                {msg.content}
+                                <ReactMarkdown
+                                    components={{
+
+                                        h1: ({ children }) => (
+                                            <h1 className="text-3xl font-bold mb-4">
+                                                {children}
+                                            </h1>
+                                        ),
+
+                                        h2: ({ children }) => (
+                                            <h2 className="text-2xl font-semibold mt-6 mb-3">
+                                                {children}
+                                            </h2>
+                                        ),
+
+                                        h3: ({ children }) => (
+                                            <h3 className="text-xl font-semibold mt-4 mb-2">
+                                                {children}
+                                            </h3>
+                                        ),
+
+                                        p: ({ children }) => (
+                                            <p className="mb-4">
+                                                {children}
+                                            </p>
+                                        ),
+
+                                        ul: ({ children }) => (
+                                            <ul className="list-disc pl-6 mb-4">
+                                                {children}
+                                            </ul>
+                                        ),
+
+                                        ol: ({ children }) => (
+                                            <ol className="list-decimal pl-6 mb-4">
+                                                {children}
+                                            </ol>
+                                        ),
+
+                                        li: ({ children }) => (
+                                            <li className="mb-2">
+                                                {children}
+                                            </li>
+                                        ),
+
+                                        strong: ({ children }) => (
+                                            <strong className="font-bold">
+                                                {children}
+                                            </strong>
+                                        ),
+
+                                        code: ({ children }) => (
+                                            <code className="bg-gray-200 px-1 py-0.5 rounded">
+                                                {children}
+                                            </code>
+                                        ),
+                                    }}
+                                >
+                                    {msg.content}
+                                </ReactMarkdown>
 
                             </div>
 
@@ -398,6 +489,8 @@ export default function ChatPage() {
                         </div>
 
                     )}
+
+                    <div ref={messagesEndRef} />
 
                 </div>
 

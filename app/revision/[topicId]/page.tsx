@@ -1,5 +1,7 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
+
 import { useEffect, useState } from "react";
 
 import {
@@ -366,10 +368,13 @@ LOAD TOPIC
                                     useUploadedFiles
                                         ? files
                                         : [],
+
+                                useGlobalFiles:
+                                    useUploadedFiles,
                             }),
                         }
                     );
-                    
+
                 if (!response.body) return;
 
                 const reader =
@@ -922,28 +927,6 @@ p-4
 leading-7
 text-gray-700
 whitespace-pre-wrap
-
-[&_h1]:text-3xl
-[&_h1]:font-bold
-[&_h1]:mb-4
-
-[&_h2]:text-2xl
-[&_h2]:font-semibold
-[&_h2]:mt-6
-[&_h2]:mb-3
-
-[&_p]:mb-4
-
-[&_ul]:list-disc
-[&_ul]:pl-6
-[&_ul]:mb-4
-
-[&_ol]:list-decimal
-[&_ol]:pl-6
-
-[&_li]:mb-2
-
-[&_strong]:font-bold
 "
                             >
 
@@ -962,11 +945,53 @@ whitespace-pre-wrap
 
                                     )}
 
-                                <div className="prose prose-sm max-w-none">
+                                <ReactMarkdown
+                                    components={{
+                                        h1: ({ children }) => (
+                                            <h1 className="text-3xl font-bold mb-4">
+                                                {children}
+                                            </h1>
+                                        ),
 
+                                        h2: ({ children }) => (
+                                            <h2 className="text-2xl font-semibold mt-6 mb-3">
+                                                {children}
+                                            </h2>
+                                        ),
+
+                                        p: ({ children }) => (
+                                            <p className="mb-4">
+                                                {children}
+                                            </p>
+                                        ),
+
+                                        ul: ({ children }) => (
+                                            <ul className="list-disc pl-6 mb-4">
+                                                {children}
+                                            </ul>
+                                        ),
+
+                                        ol: ({ children }) => (
+                                            <ol className="list-decimal pl-6 mb-4">
+                                                {children}
+                                            </ol>
+                                        ),
+
+                                        li: ({ children }) => (
+                                            <li className="mb-2">
+                                                {children}
+                                            </li>
+                                        ),
+
+                                        strong: ({ children }) => (
+                                            <strong className="font-bold text-black">
+                                                {children}
+                                            </strong>
+                                        ),
+                                    }}
+                                >
                                     {revision}
-
-                                </div>
+                                </ReactMarkdown>
 
                             </div>
 

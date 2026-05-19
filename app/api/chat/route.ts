@@ -6,6 +6,19 @@ import { adminDb }
 import { cosineSimilarity }
     from "@/lib/cosineSimilarity";
 
+import { navikCoreIdentity }
+    from "@/lib/prompts/navikCoreIdentity";
+
+import { activeRoles }
+    from "@/lib/prompts/roles";
+
+
+import { detectRole }
+    from "@/lib/prompts/detectRole";
+
+    import { topicProfiles }
+    from "@/lib/prompts/topicsProfiles";
+
 const openai =
     new OpenAI({
         apiKey:
@@ -309,29 +322,155 @@ ${localFilesText}
             knowledge.length
         );
 
+        /* =========================
+    DETECT ACTIVE ROLE
+ ========================= */
+
+        const detectedRole =
+            detectRole({
+                message,
+            });
+
+        console.log(
+            "DETECTED ROLE:",
+            detectedRole
+        );
+
+        /* =========================
+           ACTIVE ROLE PROMPT
+        ========================= */
+
+        const rolePrompt =
+            activeRoles[
+            detectedRole as keyof typeof activeRoles
+            ];
+
+
+        /* =========================
+ACTIVE TOPIC PROFILE
+========================= */
+
+        const activeTopicProfile =
+            topicProfiles.imo;
+
+
+        /* =========================
+TOPIC VALIDATOR
+========================= */
+
+        const topicValidationPrompt = `
+You are a maritime topic relevance validator.
+
+Your task:
+Determine whether the USER QUESTION
+belongs to the SAME MARITIME TOPIC
+as the CURRENT TOPIC MATERIALS.
+
+IMPORTANT:
+The question does NOT need exact wording
+inside the study materials.
+
+Allow:
+- conceptual maritime questions
+- related operational questions
+- related oral exam questions
+- related regulatory questions
+- related troubleshooting questions
+- foundational theory connected to the topic
+
+Reject ONLY if:
+- completely unrelated
+- programming/coding
+- general non-maritime discussion
+- random unrelated engineering topics
+- unrelated ship systems
+
+Return ONLY:
+YES
+or
+NO
+
+CURRENT TOPIC PROFILE:
+${activeTopicProfile}
+
+USER QUESTION:
+${message}
+`;
+
+        /* =========================
+           VALIDATE TOPIC
+        ========================= */
+
+        const validationCompletion =
+            await openai.chat.completions.create({
+                model:
+                    "gpt-4.1-nano-2025-04-14",
+
+                messages: [
+                    {
+                        role: "user",
+                        content:
+                            topicValidationPrompt,
+                    },
+                ],
+
+                max_tokens: 5,
+            });
+
+        const validationReply =
+            validationCompletion
+                .choices[0]
+                ?.message
+                ?.content
+                ?.trim()
+                ?.toUpperCase();
+
+        console.log(
+            "TOPIC VALIDATION:",
+            validationReply
+        );
+
+        /* =========================
+           TOPIC REJECTION
+        ========================= */
+
+        if (
+            validationReply !== "YES"
+        ) {
+
+            return Response.json({
+                reply:
+                    "This question is outside the current topic study materials.",
+            });
+        }
+
+        /* =========================
+           FINAL PROMPT
+        ========================= */
+
         const prompt = `
-You are a topic-restricted AI study assistant.
+${navikCoreIdentity}
+
+${rolePrompt}
 
 IMPORTANT RULES:
 
-- Answer ONLY using the provided study materials.
-- Do NOT use outside/general knowledge.
-- Do NOT invent answers.
-- If the answer is not found in the study materials, say:
+- Answer ONLY using the provided study materials
+- Do NOT invent technical facts
+- Do NOT hallucinate regulations
+- If information is unavailable in the supplied materials,
+clearly state that the required information is not available
 
-"This question is not related to the current topic study materials or the required data is not available yet."
+- Prioritize:
+  - operational understanding
+  - maritime realism
+  - safety awareness
+  - technical clarity
+  - exam relevance
 
-- Do NOT generate:
-  - files
-  - code projects
-  - essays
-  - stories
-  - unrelated content
-  - roleplay
-  - markdown downloads
-  - fake information
-
-Only provide educational answers strictly based on the provided topic data.
+- Avoid generic chatbot language
+- Avoid unrelated discussion
+- Keep responses professionally structured
 
 STUDY MATERIALS:
 ${knowledge}
