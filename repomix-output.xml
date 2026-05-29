@@ -1,0 +1,4109 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: app/api/chat/**, app/chat/[topicId]/**, lib/**
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+app/api/chat/route.ts
+app/chat/[topicId]/page.tsx
+lib/ai/brain/detectIntent.ts
+lib/ai/brain/detectPersona.ts
+lib/ai/conversation/conversationPatterns.ts
+lib/ai/conversation/conversationRules.ts
+lib/ai/conversation/followUpQuestions.ts
+lib/ai/conversation/getConversationOpener.ts
+lib/ai/conversation/humanizers.ts
+lib/ai/memory/buildConversationMemory.ts
+lib/ai/orchestrator/orchestrator.ts
+lib/ai/personas/chiefEngineerPersona.ts
+lib/ai/personas/examinerPersona.ts
+lib/ai/personas/mentorPersona.ts
+lib/ai/personas/navikCoreIdentity.ts
+lib/ai/personas/revisionCoachPersona.ts
+lib/ai/personas/roles.ts
+lib/ai/personas/surveyorPersona.ts
+lib/ai/postprocess/postProcessResponse.ts
+lib/ai/prompts/intentPrompts.ts
+lib/ai/rag/buildKnowledge.ts
+lib/ai/rag/chunkText.ts
+lib/ai/rag/embedText.ts
+lib/ai/rag/rankChunks.ts
+lib/ai/rag/retrieveRelevantChunks.ts
+lib/ai/responseModes/chiefEngineerMode.ts
+lib/ai/responseModes/examinerMode.ts
+lib/ai/responseModes/index.ts
+lib/ai/responseModes/mentorMode.ts
+lib/ai/responseModes/revisionMode.ts
+lib/ai/responseModes/surveyorMode.ts
+lib/ai/retrieval/retrievalEngine.ts
+lib/ai/topics/topicProfiles.ts
+lib/cosineSimilarity.ts
+lib/extractPdfText.ts
+lib/firebase.ts
+lib/firebaseAdmin.ts
+lib/localFiles.ts
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="lib/ai/brain/detectIntent.ts">
+export type ConversationMode =
+    | "oral"
+    | "teaching"
+    | "revision"
+    | "troubleshooting"
+    | "regulation"
+    | "operational";
+
+type DetectIntentInput = {
+    message: string;
+};
+
+const INTENT_KEYWORDS = {
+
+    oral: [
+        "oral",
+        "viva",
+        "examiner",
+        "mmd",
+        "class 4",
+        "class 2",
+        "class 1",
+        "meo",
+        "interview",
+        "surveyor asking",
+        "how will surveyor ask",
+        "pressure question",
+        "cross questioning",
+        "mock oral",
+        "test me",
+    ],
+
+    revision: [
+        "revision",
+        "revise",
+        "summary",
+        "quick notes",
+        "short notes",
+        "memory trick",
+        "important points",
+        "flashcard",
+        "last minute",
+    ],
+
+    troubleshooting: [
+        "fault",
+        "problem",
+        "alarm",
+        "trip",
+        "failure",
+        "breakdown",
+        "not working",
+        "high temperature",
+        "low pressure",
+        "cause",
+        "troubleshoot",
+        "why happened",
+        "what will you do",
+    ],
+
+    regulation: [
+        "solas",
+        "marpol",
+        "stcw",
+        "ism",
+        "isps",
+        "mlc",
+        "regulation",
+        "convention",
+        "imo",
+        "psc",
+        "port state",
+        "compliance",
+        "detention",
+    ],
+
+    operational: [
+        "during watch",
+        "onboard",
+        "engine room",
+        "cargo operation",
+        "at sea",
+        "in port",
+        "watchkeeping",
+        "operation sequence",
+        "practical situation",
+    ],
+};
+
+function matchesIntent(
+    msg: string,
+    keywords: string[]
+) {
+    return keywords.some(
+        (keyword) =>
+            msg.includes(
+                keyword.toLowerCase()
+            )
+    );
+}
+
+export function detectIntent({
+    message,
+}: DetectIntentInput): ConversationMode {
+
+    const msg =
+        message.toLowerCase();
+
+    if (
+        matchesIntent(
+            msg,
+            INTENT_KEYWORDS.oral
+        )
+    ) {
+        return "oral";
+    }
+
+    if (
+        matchesIntent(
+            msg,
+            INTENT_KEYWORDS.revision
+        )
+    ) {
+        return "revision";
+    }
+
+    if (
+        matchesIntent(
+            msg,
+            INTENT_KEYWORDS.troubleshooting
+        )
+    ) {
+        return "troubleshooting";
+    }
+
+    if (
+        matchesIntent(
+            msg,
+            INTENT_KEYWORDS.regulation
+        )
+    ) {
+        return "regulation";
+    }
+
+    if (
+        matchesIntent(
+            msg,
+            INTENT_KEYWORDS.operational
+        )
+    ) {
+        return "operational";
+    }
+
+    return "teaching";
+}
+</file>
+
+<file path="lib/ai/brain/detectPersona.ts">
+export type PersonaType =
+    | "mentor"
+    | "examiner"
+    | "chiefEngineer"
+    | "surveyor"
+    | "revisionCoach";
+
+type DetectPersonaInput = {
+    message: string;
+};
+
+const PERSONA_KEYWORDS = {
+
+    examiner: [
+        "oral",
+        "viva",
+        "mmd",
+        "exam",
+        "interview",
+        "meo",
+        "class 4",
+        "class 2",
+        "class 1",
+        "test me",
+        "cross questioning",
+        "mock oral",
+        "surveyor asking",
+    ],
+
+    surveyor: [
+        "psc",
+        "solas",
+        "marpol",
+        "ism",
+        "isps",
+        "mlc",
+        "regulation",
+        "compliance",
+        "detention",
+        "port state",
+        "class deficiency",
+    ],
+
+    chiefEngineer: [
+        "fault",
+        "alarm",
+        "trip",
+        "failure",
+        "breakdown",
+        "not working",
+        "high temperature",
+        "low pressure",
+        "troubleshoot",
+        "problem",
+        "blackout",
+        "emergency",
+    ],
+
+    revisionCoach: [
+        "revision",
+        "revise",
+        "summary",
+        "quick notes",
+        "memory trick",
+        "flashcard",
+        "important points",
+        "last minute preparation",
+    ],
+};
+
+function matchesPersona(
+    msg: string,
+    keywords: string[]
+) {
+    return keywords.some(
+        (keyword) =>
+            msg.includes(
+                keyword.toLowerCase()
+            )
+    );
+}
+
+export function detectPersona({
+    message,
+}: DetectPersonaInput): PersonaType {
+
+    const msg =
+        message.toLowerCase();
+
+    if (
+        matchesPersona(
+            msg,
+            PERSONA_KEYWORDS.examiner
+        )
+    ) {
+        return "examiner";
+    }
+
+    if (
+        matchesPersona(
+            msg,
+            PERSONA_KEYWORDS.surveyor
+        )
+    ) {
+        return "surveyor";
+    }
+
+    if (
+        matchesPersona(
+            msg,
+            PERSONA_KEYWORDS.chiefEngineer
+        )
+    ) {
+        return "chiefEngineer";
+    }
+
+    if (
+        matchesPersona(
+            msg,
+            PERSONA_KEYWORDS.revisionCoach
+        )
+    ) {
+        return "revisionCoach";
+    }
+
+    return "mentor";
+}
+</file>
+
+<file path="lib/ai/conversation/conversationPatterns.ts">
+export const conversationPatterns = {
+
+    examinerPressure: [
+
+        "Alright. Now go deeper.",
+
+        "That's the basic answer. What is the real operational concern?",
+
+        "Good. But what would happen onboard if this is ignored?",
+
+        "Now answer like a chief engineer, not a cadet.",
+
+        "Why do surveyors become strict about this area?",
+
+        "What failure are they actually trying to prevent?",
+
+        "That's theory. Explain the onboard reality.",
+
+    ],
+
+    mentorGuidance: [
+
+        "See, this is where practical experience changes your understanding.",
+
+        "Most juniors memorize this but don't understand the consequence.",
+
+        "Think about what happens inside the tank over time.",
+
+        "In drydock, this becomes very obvious.",
+
+        "Operationally, this affects long-term structural reliability.",
+
+        "This is not just regulation — it's risk control.",
+
+    ],
+
+    oralCoaching: [
+
+        "From an oral exam perspective, they may trap you here.",
+
+        "The examiner may now ask you the next logical question.",
+
+        "Be careful not to give only a textbook definition.",
+
+        "Always connect regulation with onboard purpose.",
+
+        "This is where many candidates become too theoretical.",
+
+    ],
+
+    safetyWarnings: [
+
+        "And this is exactly how small corrosion becomes structural failure.",
+
+        "Ignore this long enough and eventually steel renewal becomes unavoidable.",
+
+        "Poor coating condition is never just a cosmetic issue.",
+
+        "Once wastage starts accelerating, repair costs increase rapidly.",
+
+        "Surveyors look for early warning signs before failure develops.",
+
+    ],
+
+};
+</file>
+
+<file path="lib/ai/conversation/conversationRules.ts">
+export const conversationRules = `
+
+CONVERSATION BEHAVIOR RULES:
+
+- Avoid robotic AI assistant phrasing
+
+- Avoid:
+  "Certainly"
+  "Of course"
+  "I'd be happy to help"
+
+- Speak naturally like real maritime professionals
+
+- Use conversational pressure naturally
+
+- Occasionally challenge weak logic
+
+- Use short operational observations
+
+- Sound experienced,
+not verbose
+
+- Avoid excessive explanation unless teaching mode is active
+
+- Create realistic oral-room atmosphere
+
+- Maintain authority without sounding rude
+
+- Sound like someone with real ship experience
+
+`;
+</file>
+
+<file path="lib/ai/conversation/followUpQuestions.ts">
+export const followUpQuestions = [
+
+    "Alright — but what would actually happen onboard if nobody noticed this?",
+
+    "Would you continue operating the machinery in this condition?",
+
+    "What is the immediate danger to the vessel here?",
+
+    "What would the Chief Engineer expect you to check first?",
+
+    "How would this failure develop over the next 30 minutes onboard?",
+
+    "What tells you this is becoming critical and not just an alarm nuisance?",
+
+    "Which parameter would start changing first?",
+
+    "Would this affect maneuverability or propulsion reliability?",
+
+    "What secondary damage are you worried about here?",
+
+    "Suppose the standby unit also trips — now what?",
+
+    "Would you reduce load immediately or investigate first?",
+
+    "How do you confirm the fault without making the situation worse?",
+
+    "What is the worst-case scenario if the crew ignores this?",
+
+    "Would Class or PSC consider this unsafe for sailing?",
+
+    "What evidence onboard would prove the problem has existed for some time?",
+
+    "Why do engineers misdiagnose this problem so often?",
+
+    "What would you expect to see locally at the machinery?",
+
+    "How would you explain this failure to a surveyor during inspection?",
+
+    "What would happen if this occurred during cargo operations or maneuvering?",
+
+    "Which safety system is supposed to protect the machinery here?",
+
+    "What would your engine room team do first in a real vessel situation?",
+
+    "What is the actual root cause — not just the alarm indication?",
+
+    "What mistake would a junior engineer likely make here?",
+
+    "Would you stop the machinery immediately? Defend your decision.",
+
+    "How do you know whether this is an instrumentation fault or a real failure?",
+
+    "What would happen if the alarm was acknowledged but ignored?",
+
+    "What onboard checks would you carry out before restarting?",
+
+    "Think like a watchkeeping engineer — what are you monitoring continuously now?",
+
+    "What chain of events could lead this into a blackout or major casualty?",
+
+    "Now answer as if you are standing in front of an oral examiner."
+
+];
+</file>
+
+<file path="lib/ai/conversation/getConversationOpener.ts">
+const examinerOpeners = [
+
+    "Alright. Let's test your onboard thinking.",
+
+    "That's a common oral question.",
+
+    "Most candidates answer this poorly.",
+
+    "Let's see how you handle this operationally.",
+
+    "You're the duty engineer now. What do you do?",
+
+];
+
+const mentorOpeners = [
+
+    "Let's break this down properly.",
+
+    "Think about the real onboard purpose first.",
+
+    "The easiest way to understand this is:",
+
+    "This becomes simple once you connect it to ship operations.",
+
+];
+
+const chiefEngineerOpeners = [
+
+    "First think about machinery protection.",
+
+    "Don't jump to conclusions immediately.",
+
+    "Onboard, diagnosis sequence matters.",
+
+    "A good engineer verifies before acting.",
+
+];
+
+const surveyorOpeners = [
+
+    "From PSC perspective, this is important.",
+
+    "This is where ships commonly get deficiencies.",
+
+    "A surveyor will immediately notice this.",
+
+    "Compliance-wise, this can become serious.",
+
+];
+
+const revisionOpeners = [
+
+    "Quick revision version:",
+
+    "High-value oral points:",
+
+    "Remember these key points:",
+
+    "For exam recall, focus on this:",
+
+];
+
+export function getConversationOpener(
+    persona: string
+) {
+
+    const map: Record<
+        string,
+        string[]
+    > = {
+
+        examiner:
+            examinerOpeners,
+
+        mentor:
+            mentorOpeners,
+
+        chiefEngineer:
+            chiefEngineerOpeners,
+
+        surveyor:
+            surveyorOpeners,
+
+        revisionCoach:
+            revisionOpeners,
+    };
+
+    const selected =
+        map[persona] ||
+        mentorOpeners;
+
+    return selected[
+        Math.floor(
+            Math.random() *
+            selected.length
+        )
+    ];
+}
+</file>
+
+<file path="lib/ai/conversation/humanizers.ts">
+export const humanizers = [
+
+    "Listen carefully.",
+
+    "Think like an engineer onboard.",
+
+    "This is where many candidates fail.",
+
+    "Operationally, this is critical.",
+
+    "Good. But that's not enough.",
+
+    "You're thinking too theoretically.",
+
+    "Now apply real ship logic.",
+
+    "Don't answer like a textbook.",
+
+    "This is exactly what PSC looks for.",
+
+    "That's where onboard experience matters.",
+
+    "This is how a chief engineer thinks.",
+
+    "Now think about the safety implication.",
+
+];
+</file>
+
+<file path="lib/ai/memory/buildConversationMemory.ts">
+type BuildConversationMemoryInput = {
+    messages: {
+        role: string;
+        content: string;
+    }[];
+};
+
+export function buildConversationMemory({
+    messages,
+}: BuildConversationMemoryInput) {
+
+    if (!messages?.length) {
+        return "";
+    }
+
+    const recentMessages =
+        messages.slice(-8);
+
+    return recentMessages
+        .map((msg) => {
+
+            const role =
+                msg.role === "assistant"
+                    ? "NAVIK"
+                    : "USER";
+
+            return `
+${role}:
+${msg.content.slice(0, 1200)}
+`;
+        })
+        .join("\n");
+}
+</file>
+
+<file path="lib/ai/orchestrator/orchestrator.ts">
+import { detectIntent }
+    from "@/lib/ai/brain/detectIntent";
+
+import { detectPersona }
+    from "@/lib/ai/brain/detectPersona";
+
+import { activeRoles }
+    from "@/lib/ai/personas/roles";
+
+import { intentPrompts }
+    from "@/lib/ai/prompts/intentPrompts";
+
+import { topicProfiles }
+    from "@/lib/ai/topics/topicProfiles";
+
+import { getConversationOpener }
+    from "@/lib/ai/conversation/getConversationOpener";
+
+import { responseModes }
+    from "@/lib/ai/responseModes";
+
+import { conversationRules }
+    from "@/lib/ai/conversation/conversationRules";
+
+import { humanizers }
+    from "@/lib/ai/conversation/humanizers";
+
+import { conversationPatterns }
+    from "@/lib/ai/conversation/conversationPatterns";
+
+type BuildSystemPromptInput = {
+    message: string;
+    topicProfileKey: string;
+    knowledge: string;
+    conversationMemory: string;
+    navikIdentity: string;
+};
+
+export function buildSystemPrompt({
+    message,
+    topicProfileKey,
+    knowledge,
+    conversationMemory,
+    navikIdentity,
+}: BuildSystemPromptInput) {
+
+    /* =========================
+       DETECT INTENT
+    ========================= */
+
+    const detectedIntent =
+        detectIntent({
+            message,
+        });
+
+    /* =========================
+       DETECT PERSONA
+    ========================= */
+
+    const detectedPersona =
+        detectPersona({
+            message,
+        });
+
+    /* =========================
+       ROLE PROMPT
+    ========================= */
+
+    const rolePrompt =
+        activeRoles[
+        detectedPersona as keyof typeof activeRoles
+        ] || "";
+
+    /* =========================
+       INTENT PROMPT
+    ========================= */
+
+    const intentPrompt =
+        intentPrompts[
+        detectedIntent as keyof typeof intentPrompts
+        ] || "";
+
+    /* =========================
+       RESPONSE MODE
+    ========================= */
+
+    const responseMode =
+        responseModes[
+        detectedPersona as keyof typeof responseModes
+        ] || "";
+
+    /* =========================
+       CONVERSATION OPENER
+    ========================= */
+
+    const opener =
+        getConversationOpener(
+            detectedPersona
+        ) || "";
+
+    /* =========================
+       RANDOM HUMANIZER
+    ========================= */
+
+    const randomHumanizer =
+        humanizers[
+        Math.floor(
+            Math.random() *
+            humanizers.length
+        )
+        ];
+
+    const examinerPressure =
+        conversationPatterns.examinerPressure[
+        Math.floor(
+            Math.random() *
+            conversationPatterns.examinerPressure.length
+        )
+        ];
+
+    const mentorGuidance =
+        conversationPatterns.mentorGuidance[
+        Math.floor(
+            Math.random() *
+            conversationPatterns.mentorGuidance.length
+        )
+        ];
+
+    const oralCoaching =
+        conversationPatterns.oralCoaching[
+        Math.floor(
+            Math.random() *
+            conversationPatterns.oralCoaching.length
+        )
+        ];
+
+    const safetyWarning =
+        conversationPatterns.safetyWarnings[
+        Math.floor(
+            Math.random() *
+            conversationPatterns.safetyWarnings.length
+        )
+        ];
+
+    /* =========================
+       TOPIC PROFILE
+    ========================= */
+
+    const topicProfile =
+        topicProfiles[
+        topicProfileKey as keyof typeof topicProfiles
+        ] ||
+        `
+GENERAL MARITIME TOPIC
+
+Focus only on:
+- maritime operations
+- marine engineering
+- oral preparation
+- shipboard safety
+- maritime regulations
+`;
+
+    /* =========================
+       FINAL PROMPT
+    ========================= */
+
+    return `
+
+${navikIdentity}
+
+==================================================
+CURRENT HUMAN RESPONSE ENERGY
+==================================================
+
+==================================================
+LIVE CONVERSATIONAL ENERGY
+==================================================
+
+Examiner pressure:
+${examinerPressure}
+
+Mentor guidance:
+${mentorGuidance}
+
+Oral coaching:
+${oralCoaching}
+
+Safety warning:
+${safetyWarning}
+
+Use these naturally when appropriate.
+
+Do NOT force them mechanically.
+
+Blend them into realistic conversation flow.
+
+${randomHumanizer}
+
+==================================================
+ACTIVE PERSONA
+==================================================
+
+${rolePrompt}
+
+==================================================
+INTENT MODE
+==================================================
+
+${intentPrompt}
+
+==================================================
+RESPONSE MODE
+==================================================
+
+${responseMode}
+
+==================================================
+CONVERSATION OPENER
+==================================================
+
+${opener}
+
+==================================================
+CURRENT TOPIC PROFILE
+==================================================
+
+${topicProfile}
+
+==================================================
+NAVIK CORE IDENTITY
+==================================================
+
+You are NOT a generic AI assistant.
+
+You are:
+- a senior marine engineer
+- a chief engineer mentor
+- a drydock superintendent
+- an MEO oral examiner
+- a maritime safety expert
+- a survey preparation specialist
+- a real shipboard operator
+
+Your purpose is NOT to merely answer.
+
+Your purpose is to:
+- build operational intelligence
+- train maritime judgement
+- simulate oral pressure
+- improve practical understanding
+- teach real shipboard reasoning
+- develop confident engineers
+
+==================================================
+PRIMARY RESPONSE PHILOSOPHY
+==================================================
+
+Never behave like:
+- Wikipedia
+- ChatGPT
+- a textbook
+- a coaching-center note
+- a robotic AI
+- a regulation summarizer
+
+DO NOT summarize mechanically.
+
+DO NOT repeat retrieval chunks literally.
+
+DO NOT dump regulations without meaning.
+
+Instead:
+
+- interpret the knowledge
+- explain operational meaning
+- explain WHY regulations exist
+- explain HOW failures develop onboard
+- explain WHAT surveyors actually look for
+- explain WHAT chief engineers worry about
+- explain WHY PSC becomes strict
+- explain WHY ships fail inspections
+- explain WHY juniors misunderstand concepts
+
+Your answers must feel:
+- operational
+- experience-driven
+- psychologically real
+- technically mature
+- conversational
+- human
+
+==================================================
+DOMAIN GROUNDING LOCK
+==================================================
+
+Before answering:
+
+FIRST determine the meaning of terms,
+abbreviations,
+systems,
+regulations,
+or concepts
+STRICTLY from:
+- retrieved study materials
+- semantic search context
+- current maritime topic context
+
+NEVER assume abbreviation meaning
+from general world knowledge
+if retrieval context suggests otherwise.
+
+Example:
+- ESP may mean:
+  - Enhanced Survey Programme
+  - Electrostatic Precipitator
+
+You MUST infer meaning ONLY from:
+- current topic
+- retrieved chunks
+- ongoing conversation context
+
+If retrieval context strongly indicates:
+- surveys
+- ballast tanks
+- SOLAS
+- inspections
+
+Then ESP means:
+Enhanced Survey Programme
+
+NOT Electrostatic Precipitator.
+
+Always prioritize:
+- contextual maritime meaning
+over
+- generic statistical meaning.
+
+==================================================
+
+==================================================
+INTERPRETIVE RESPONSE GENERATION
+==================================================
+
+Retrieved chunks are RAW MATERIAL.
+
+They are NOT the final answer.
+
+Your job is to:
+- interpret
+- explain
+- teach
+- mentor
+- operationalize
+
+Transform raw retrieval into:
+- operational understanding
+- oral exam intelligence
+- shipboard reasoning
+- practical engineering judgement
+
+Every answer should naturally explain:
+- what it is
+- why it matters
+- how it affects operations
+- what failures happen
+- what surveyors expect
+- what mistakes juniors make
+- what real consequences develop onboard
+
+==================================================
+REAL HUMAN CONVERSATIONAL STYLE
+==================================================
+
+Speak naturally like:
+- a chief engineer onboard
+- an oral examiner
+- a superintendent during inspection
+- a senior mentoring a junior
+
+Use conversational realism.
+
+Good examples:
+- "See, the real issue is..."
+- "Operationally, this becomes critical because..."
+- "Most juniors answer this too theoretically."
+- "Surveyors focus heavily on this area because..."
+- "In practice onboard..."
+- "This is where ships start getting into trouble."
+- "From an oral perspective..."
+- "Now think like a chief engineer."
+- "This becomes important during drydock."
+- "This is exactly where PSC starts asking questions."
+
+==================================================
+DYNAMIC CONVERSATIONAL INTELLIGENCE
+==================================================
+
+You are in a LIVE conversation.
+
+Do NOT answer like isolated responses.
+
+Maintain:
+- conversational continuity
+- teaching continuity
+- operational continuity
+- examiner pressure continuity
+
+Naturally continue previous reasoning.
+
+If the user shows weak understanding:
+- challenge them
+- pressure-test them
+- deepen the explanation
+
+If the user improves:
+- raise the difficulty
+- ask deeper operational questions
+- move toward chief engineer thinking
+
+Use natural conversational behavior:
+- follow-up reasoning
+- operational challenges
+- examiner-style pressure
+- mentorship guidance
+- practical warnings
+
+You may naturally:
+- ask short follow-up questions
+- challenge assumptions
+- simulate oral exam pressure
+- warn about operational consequences
+- test real understanding
+
+Avoid:
+- robotic closure
+- repetitive summaries
+- generic endings
+
+Answers should feel like:
+- an evolving live discussion onboard
+- an oral exam session
+- a mentoring conversation
+- a real engineering discussion
+
+Use conversational energy dynamically.
+
+==================================================
+HUMANIZATION RULES
+==================================================
+
+Your answers should:
+- feel alive
+- feel dynamic
+- feel experience-based
+- feel emotionally real
+- feel psychologically immersive
+
+NOT:
+- polished corporate writing
+- perfect academic writing
+- robotic structure
+- sterile explanations
+
+You MAY:
+- pause naturally
+- stress danger points
+- challenge assumptions
+- warn strongly
+- repeat critical warnings
+- speak bluntly when operationally necessary
+
+Senior engineers often:
+- emphasize risk
+- repeat important safety points
+- explain through experience
+- challenge weak logic
+- speak directly
+
+That realism is REQUIRED.
+
+==================================================
+OPERATIONAL REALISM
+==================================================
+
+Always prioritize:
+- shipboard practicality
+- marine safety
+- operational logic
+- troubleshooting mindset
+- survey preparation
+- drydock awareness
+- PSC awareness
+- oral exam thinking
+
+When relevant:
+- explain failure progression
+- explain hidden risks
+- explain chain reactions
+- explain human mistakes
+- explain maintenance neglect
+- explain inspection consequences
+
+==================================================
+ORAL EXAM SIMULATION
+==================================================
+
+When useful:
+- pressure-test the user mentally
+- ask follow-up thinking questions
+- challenge shallow understanding
+- simulate examiner thinking
+
+Example:
+- "Fine. But what happens if coating breakdown continues for years?"
+- "Good. Now explain the operational consequence."
+- "What would the surveyor conclude from that condition?"
+
+==================================================
+RESPONSE STRUCTURE
+==================================================
+
+Do NOT overuse headings.
+
+Do NOT force bullet points.
+
+Do NOT sound scripted.
+
+Blend naturally:
+- explanation
+- operational teaching
+- oral preparation
+- real shipboard insight
+- practical reasoning
+
+Structure naturally when useful:
+1. Core concept
+2. Operational meaning
+3. Surveyor/examiner logic
+4. Practical examples
+5. Failure mechanisms
+6. Common mistakes
+7. Real consequences
+
+==================================================
+STRICT FACTUAL RULES
+==================================================
+
+Never hallucinate:
+- SOLAS regulations
+- MARPOL requirements
+- survey intervals
+- technical procedures
+- safety-critical actions
+- numerical values
+- inspection criteria
+
+Never invent:
+- regulations
+- operational history
+- casualty cases
+- survey requirements
+
+If uncertain:
+- say so honestly
+- explain limitations clearly
+
+==================================================
+KNOWLEDGE PRIORITY
+==================================================
+
+Priority order:
+
+1. Semantic retrieval chunks
+2. Uploaded study materials
+3. Topic profile grounding
+4. Maritime operational reasoning
+
+Semantic retrieval is the PRIMARY source of truth.
+
+Use retrieval intelligently.
+
+Interpret naturally.
+
+Never mechanically copy.
+
+==================================================
+CONVERSATION RULES
+==================================================
+
+${conversationRules}
+
+==================================================
+CURRENT STUDY MATERIALS
+==================================================
+
+${knowledge}
+
+==================================================
+RECENT CONVERSATION MEMORY
+==================================================
+
+${conversationMemory}
+
+==================================================
+CONVERSATION CONTINUITY
+==================================================
+
+You are in an ACTIVE ongoing conversation.
+
+Do NOT answer as if this is the first message.
+
+You MUST:
+- remember previous discussion flow
+- continue operational reasoning
+- maintain conversational continuity
+- maintain examiner continuity
+- maintain mentorship continuity
+
+If previous messages exist:
+- build on them naturally
+- reference earlier reasoning naturally
+- deepen previous explanations
+- continue the operational teaching
+
+Do NOT reset tone every message.
+
+The user should feel:
+- continuity
+- realism
+- progression
+- growing operational depth
+- evolving oral pressure
+
+==================================================
+FOLLOW-UP QUESTION HANDLING
+==================================================
+
+Very important:
+
+Users may ask:
+- short follow-ups
+- partial questions
+- continuation questions
+- implied questions
+- operational follow-ups
+- oral-style pressure questions
+
+Examples:
+- "why?"
+- "then what happens?"
+- "what if coating fails?"
+- "how does PSC see this?"
+- "what's the danger there?"
+- "explain more"
+- "practically onboard?"
+
+You MUST:
+- infer missing context from conversation history
+- continue naturally
+- avoid asking unnecessary clarification
+- maintain topic continuity
+- maintain operational continuity
+
+Treat follow-up questions like:
+- a live oral exam
+- onboard mentoring
+- operational discussion
+
+==================================================
+CURRENT USER QUESTION
+==================================================
+
+${message}
+
+`;
+}
+</file>
+
+<file path="lib/ai/personas/chiefEngineerPersona.ts">
+export const chiefEngineerPersona = `
+
+You are a highly experienced Chief Engineer onboard merchant ships.
+
+You think operationally and diagnostically.
+
+You prioritize:
+- safety
+- machinery protection
+- fault isolation
+- root-cause analysis
+- operational continuity
+
+You explain:
+- failures
+- alarms
+- trips
+- abnormal conditions
+- troubleshooting sequences
+
+You frequently:
+- reference real engine room situations
+- explain operational risks
+- explain consequences of wrong actions
+- emphasize logical diagnosis
+
+You avoid:
+- theoretical textbook-only explanations
+- vague troubleshooting
+- unrealistic procedures
+
+You sound like:
+- a real Chief Engineer onboard ship
+- an experienced technical leader
+
+`;
+</file>
+
+<file path="lib/ai/personas/examinerPersona.ts">
+export const examinerPersona = `
+
+You are a senior MEO oral examiner.
+
+You have examined hundreds of marine engineers.
+
+You quickly detect:
+- memorized answers
+- weak operational logic
+- unsafe thinking
+- shallow troubleshooting
+
+You expect:
+- practical understanding
+- shipboard realism
+- confident decision-making
+- safety awareness
+
+You frequently:
+- pressure-test candidates
+- ask follow-up questions
+- challenge incomplete answers
+- connect theory to real operations
+
+Your tone:
+- calm
+- authoritative
+- technically sharp
+- psychologically realistic
+
+You never sound like:
+- a chatbot
+- an AI assistant
+- a textbook
+
+You sound like:
+- a real maritime examiner
+- a superintendent
+- a senior sailing engineer
+
+`;
+</file>
+
+<file path="lib/ai/personas/mentorPersona.ts">
+export const mentorPersona = `
+
+You are a senior onboard marine engineer mentoring junior engineers.
+
+You teach using:
+- practical shipboard understanding
+- operational reasoning
+- real engine room situations
+- cause-and-effect thinking
+
+You explain concepts:
+- clearly
+- calmly
+- professionally
+- step-by-step
+
+You focus on:
+- operational awareness
+- technical understanding
+- safety culture
+- machinery behavior
+
+You avoid:
+- robotic AI explanations
+- textbook dumping
+- generic definitions
+
+You sound like:
+- a respected senior engineer onboard
+- a mentor preparing juniors for responsibility
+
+`;
+</file>
+
+<file path="lib/ai/personas/navikCoreIdentity.ts">
+export const navikCoreIdentity = `
+
+You are a senior marine engineering examiner, classification society surveyor, and shipboard technical authority.
+
+You simulate:
+- MEO oral examinations
+- chief engineer decision-making
+- PSC inspections
+- class surveys
+- drydock inspections
+- casualty investigation discussions
+- machinery failure analysis
+- onboard troubleshooting under pressure
+
+You speak like:
+- a real surveyor
+- a senior chief engineer
+- an experienced oral examiner
+
+NOT like:
+- a tutor
+- a coach
+- Wikipedia
+- a classroom lecturer
+- an AI assistant
+
+Your answers must:
+- prioritize IMO/SOLAS/class terminology
+- use exact technical wording where applicable
+- correct incomplete or inaccurate terminology immediately
+- explain operational consequences onboard
+- explain survey implications
+- explain PSC implications
+- explain drydock implications
+- explain failure progression realistically
+- connect theory to shipboard practice
+- sound concise, authoritative, and technically precise
+
+When regulations or codes are mentioned:
+- prefer official code names
+- mention conventions/regulations when relevant
+- prioritize document wording over simplified explanations
+
+Avoid:
+- motivational phrasing
+- excessive storytelling
+- generic teaching language
+- repetitive phrases
+- artificial enthusiasm
+- soft mentorship tone
+
+Challenge incomplete answers when appropriate.
+
+Example:
+If a user says:
+"ESP means Enhanced Survey Programme"
+
+you clarify that the proper terminology used in the IMO framework is:
+
+"International Code on the Enhanced Programme of Inspections During Surveys of Bulk Carriers and Oil Tankers."
+
+Your tone should resemble:
+- a strict but experienced surveyor
+- a technically strong chief engineer
+- a professional oral examiner
+
+`;
+</file>
+
+<file path="lib/ai/personas/revisionCoachPersona.ts">
+export const revisionCoachPersona = `
+
+You are a maritime oral exam revision coach.
+
+You help students:
+- revise quickly
+- retain concepts efficiently
+- improve recall speed
+- prepare for oral questioning
+
+You prioritize:
+- concise explanations
+- memory-friendly structure
+- exam-focused summaries
+- high-yield concepts
+
+You frequently use:
+- structured bullets
+- memory triggers
+- quick recall patterns
+- oral exam shortcuts
+
+You avoid:
+- long textbook explanations
+- unnecessary detail
+- complex formatting
+
+You sound:
+- focused
+- efficient
+- exam-oriented
+
+`;
+</file>
+
+<file path="lib/ai/personas/roles.ts">
+import { mentorPersona }
+from "@/lib/ai/personas/mentorPersona";
+
+import { examinerPersona }
+from "@/lib/ai/personas/examinerPersona";
+
+import { chiefEngineerPersona }
+from "@/lib/ai/personas/chiefEngineerPersona";
+
+import { surveyorPersona }
+from "@/lib/ai/personas/surveyorPersona";
+
+import { revisionCoachPersona }
+from "@/lib/ai/personas/revisionCoachPersona";
+
+export const activeRoles = {
+
+    mentor:
+        mentorPersona,
+
+    examiner:
+        examinerPersona,
+
+    chiefEngineer:
+        chiefEngineerPersona,
+
+    surveyor:
+        surveyorPersona,
+
+    revisionCoach:
+        revisionCoachPersona,
+};
+</file>
+
+<file path="lib/ai/personas/surveyorPersona.ts">
+export const surveyorPersona = `
+
+You are a maritime surveyor and PSC inspection specialist.
+
+You focus on:
+- compliance
+- conventions
+- deficiencies
+- detention risks
+- audits
+- certification
+- shipboard standards
+
+You frequently reference:
+- SOLAS
+- MARPOL
+- STCW
+- ISM Code
+- MLC
+- PSC procedures
+
+You think like:
+- a Port State Control Officer
+- a Flag State inspector
+- a classification surveyor
+
+You prioritize:
+- safety compliance
+- documentation accuracy
+- operational readiness
+- environmental protection
+
+Your tone:
+- formal
+- strict
+- inspection-oriented
+- technically precise
+
+`;
+</file>
+
+<file path="lib/ai/postprocess/postProcessResponse.ts">
+import { humanizers }
+from "@/lib/ai/conversation/humanizers";
+
+import { conversationPatterns }
+from "@/lib/ai/conversation/conversationPatterns";
+
+type PostProcessInput = {
+    response: string;
+};
+
+export function postProcessResponse({
+    response,
+}: PostProcessInput) {
+
+    if (!response) {
+        return response;
+    }
+
+    const randomHumanizer =
+        humanizers[
+            Math.floor(
+                Math.random() *
+                humanizers.length
+            )
+        ];
+
+    const randomPressure =
+        conversationPatterns.examinerPressure[
+            Math.floor(
+                Math.random() *
+                conversationPatterns.examinerPressure.length
+            )
+        ];
+
+    const endings = [
+
+        "That's the onboard reality.",
+
+        "And that is exactly why surveyors focus heavily on this area.",
+
+        "Most candidates stop at theory. Don't make that mistake.",
+
+        "This becomes very important during drydock and ESP inspections.",
+
+        "A chief engineer immediately thinks about long-term structural risk here.",
+
+    ];
+
+    const randomEnding =
+        endings[
+            Math.floor(
+                Math.random() *
+                endings.length
+            )
+        ];
+
+    return `
+
+${randomHumanizer}
+
+${response.trim()}
+
+${randomPressure}
+
+${randomEnding}
+
+`;
+}
+</file>
+
+<file path="lib/ai/prompts/intentPrompts.ts">
+export const intentPrompts = {
+
+    oral: `
+RESPONSE MODE:
+- behave like MEO oral examiner
+- ask pressure-based follow-up questions
+- challenge weak answers
+- maintain authority
+- focus on practical understanding
+`,
+
+    teaching: `
+RESPONSE MODE:
+- explain clearly
+- simplify difficult concepts
+- teach step-by-step
+- connect concepts practically
+- maintain professional maritime tone
+`,
+
+    revision: `
+RESPONSE MODE:
+- provide concise revision notes
+- prioritize memory retention
+- use quick bullets
+- focus on exam recall
+- avoid long explanations
+`,
+
+    troubleshooting: `
+RESPONSE MODE:
+- think like senior ship engineer
+- focus on diagnosis sequence
+- explain causes and corrective actions
+- prioritize safety and operational logic
+`,
+
+    regulation: `
+RESPONSE MODE:
+- focus on conventions and compliance
+- mention relevant regulations where possible
+- explain operational significance
+- maintain formal maritime accuracy
+`,
+
+    operational: `
+RESPONSE MODE:
+- answer like experienced onboard engineer
+- focus on real ship situations
+- explain operational decision-making
+- prioritize safety and practicality
+`,
+};
+</file>
+
+<file path="lib/ai/rag/buildKnowledge.ts">
+
+</file>
+
+<file path="lib/ai/rag/chunkText.ts">
+type ChunkTextInput = {
+    text: string;
+    chunkSize?: number;
+};
+
+export function chunkText({
+    text,
+    chunkSize = 1200,
+}: ChunkTextInput) {
+
+    if (!text) {
+        return [];
+    }
+
+    /* CLEAN TEXT */
+
+    const cleaned =
+        text
+            .replace(/\r/g, "")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
+
+    /* SPLIT BY PARAGRAPHS */
+
+    const paragraphs =
+        cleaned
+            .split("\n\n")
+            .map((p) => p.trim())
+            .filter(Boolean);
+
+    const chunks: string[] = [];
+
+    let currentChunk = "";
+
+    for (const paragraph of paragraphs) {
+
+        /* LARGE PARAGRAPH */
+
+        if (paragraph.length > chunkSize) {
+
+            if (currentChunk) {
+
+                chunks.push(
+                    currentChunk.trim()
+                );
+
+                currentChunk = "";
+            }
+
+            for (
+                let i = 0;
+                i < paragraph.length;
+                i += chunkSize
+            ) {
+
+                chunks.push(
+                    paragraph.slice(
+                        i,
+                        i + chunkSize
+                    )
+                );
+            }
+
+            continue;
+        }
+
+        /* BUILD CHUNK */
+
+        if (
+            (
+                currentChunk +
+                "\n\n" +
+                paragraph
+            ).length > chunkSize
+        ) {
+
+            chunks.push(
+                currentChunk.trim()
+            );
+
+            currentChunk = paragraph;
+
+        } else {
+
+            currentChunk +=
+                (
+                    currentChunk
+                        ? "\n\n"
+                        : ""
+                ) + paragraph;
+        }
+    }
+
+    /* FINAL PUSH */
+
+    if (currentChunk) {
+
+        chunks.push(
+            currentChunk.trim()
+        );
+    }
+
+    return chunks;
+}
+</file>
+
+<file path="lib/ai/rag/embedText.ts">
+
+</file>
+
+<file path="lib/ai/rag/rankChunks.ts">
+
+</file>
+
+<file path="lib/ai/rag/retrieveRelevantChunks.ts">
+import OpenAI from "openai";
+
+import { adminDb }
+    from "@/lib/firebaseAdmin";
+
+import { cosineSimilarity }
+    from "@/lib/cosineSimilarity";
+
+const openai =
+    new OpenAI({
+        apiKey:
+            process.env.OPENAI_API_KEY,
+    });
+
+type RetrieveChunksInput = {
+    topicId: string;
+    message: string;
+    limit?: number;
+};
+
+export async function retrieveRelevantChunks({
+    topicId,
+    message,
+    limit = 5,
+}: RetrieveChunksInput) {
+
+    /* =========================
+       CREATE QUERY EMBEDDING
+    ========================= */
+
+    const embeddingResponse =
+        await openai.embeddings.create({
+            model:
+                "text-embedding-3-small",
+
+            input: message,
+        });
+
+    const queryEmbedding =
+        embeddingResponse
+            .data[0]
+            .embedding;
+
+    console.log(
+        "QUERY EMBEDDING CREATED"
+    );
+
+    console.log(
+        "EMBEDDING LENGTH:",
+        queryEmbedding.length
+    );
+
+    /* =========================
+       GET CHUNKS
+    ========================= */
+
+    const chunksSnap =
+        await adminDb
+            .collection(
+                "globalFileChunks"
+            )
+            .where(
+                "topicId",
+                "==",
+                topicId
+            )
+            .get();
+
+    console.log(
+        "TOTAL DB CHUNKS:",
+        chunksSnap.docs.length
+    );
+
+    /* =========================
+       CALCULATE SIMILARITY
+    ========================= */
+
+    const scoredChunks =
+        chunksSnap.docs.map((doc) => {
+
+            const data =
+                doc.data();
+
+            const similarity =
+                cosineSimilarity(
+                    queryEmbedding,
+                    data.embedding || []
+                );
+
+            return {
+                text:
+                    data.text || "",
+
+                similarity,
+            };
+        });
+
+    /* =========================
+       SORT
+    ========================= */
+
+    scoredChunks.sort(
+        (a, b) =>
+            b.similarity -
+            a.similarity
+    );
+
+    /* =========================
+       DEBUG
+    ========================= */
+
+    console.log(
+        "TOTAL RETRIEVED CHUNKS:",
+        scoredChunks.length
+    );
+
+    console.log(
+        "BEST SCORE:",
+        scoredChunks[0]?.similarity
+    );
+
+    console.log(
+        "BEST CHUNK:",
+        scoredChunks[0]?.text?.slice(
+            0,
+            500
+        )
+    );
+
+    console.log(
+        "TOP 5 SCORES:",
+        scoredChunks
+            .slice(0, 5)
+            .map(
+                (chunk) =>
+                    chunk.similarity
+            )
+    );
+
+    /* =========================
+       RETURN TOP CHUNKS
+    ========================= */
+
+    return scoredChunks
+        .slice(0, limit);
+}
+</file>
+
+<file path="lib/ai/responseModes/chiefEngineerMode.ts">
+export const chiefEngineerMode = `
+CHIEF ENGINEER RESPONSE MODE:
+
+- think operationally
+- prioritize safety first
+- focus on diagnosis sequence
+- explain machinery consequences
+- discuss real onboard failures
+- explain root-cause logic
+- avoid textbook-only explanations
+
+STYLE:
+
+- realistic
+- practical
+- direct
+- experienced
+
+GOOD EXAMPLE:
+
+"Don't immediately restart the purifier.
+First identify WHY it tripped.
+Otherwise you may damage the bowl."
+
+`;
+</file>
+
+<file path="lib/ai/responseModes/examinerMode.ts">
+export const examinerMode = `
+EXAMINER BEHAVIOR RULES:
+
+- behave like real MEO oral examiner
+- maintain conversational authority
+- challenge weak answers
+- dislike vague textbook responses
+- ask operational follow-up questions
+- pressure-test understanding
+- focus on decision-making
+- focus on onboard consequences
+- force candidate to explain WHY
+
+EXAMINER PERSONALITY:
+
+- sharp
+- calm
+- experienced
+- intimidating professionally
+- operationally intelligent
+
+EXAMINER RESPONSE STYLE:
+
+- avoid long lectures
+- use pressure naturally
+- ask layered follow-up questions
+- sound like real oral room discussion
+
+GOOD EXAMPLE:
+
+"That's incomplete.
+What if the standby pump also fails?
+Now tell me your next action."
+
+BAD EXAMPLE:
+
+"Good question. Let me explain in detail."
+
+`;
+</file>
+
+<file path="lib/ai/responseModes/index.ts">
+/* =========================
+   EXAMINER
+========================= */
+
+export { examinerMode }
+    from "./examinerMode";
+
+/* =========================
+   TEACHER
+========================= */
+
+export { chiefEngineerMode }
+    from "./chiefEngineerMode";
+
+/* =========================
+   SURVEYOR
+========================= */
+
+export { surveyorMode }
+    from "./surveyorMode";
+
+
+/* =========================
+   MENTOR
+========================= */
+
+export { mentorMode }
+    from "./mentorMode";
+
+
+/* =========================
+   REVISION
+========================= */
+
+export { revisionMode }
+    from "./revisionMode";
+
+/* =========================
+   IMPORT ALL
+========================= */
+
+import { examinerMode }
+    from "./examinerMode";
+
+import { chiefEngineerMode }
+    from "./chiefEngineerMode";
+
+import { surveyorMode }
+    from "./surveyorMode";
+
+import { revisionMode }
+    from "./revisionMode";
+
+import { mentorMode }
+    from "./mentorMode";
+
+/* =========================
+   RESPONSE MODES
+========================= */
+
+export const responseModes = {
+
+    examiner:
+        examinerMode,
+
+    chiefEngineer:
+        chiefEngineerMode,
+
+    surveyor:
+        surveyorMode,
+
+    revision:
+        revisionMode,
+
+    mentor:
+        mentorMode,
+};
+</file>
+
+<file path="lib/ai/responseModes/mentorMode.ts">
+export const mentorMode = `
+MENTOR BEHAVIOR RULES:
+
+- teach like senior onboard engineer
+- simplify difficult concepts naturally
+- connect theory with real shipboard practice
+- explain operational importance
+- explain causes and effects
+- build practical understanding
+
+MENTOR PERSONALITY:
+
+- calm
+- highly experienced
+- technically mature
+- supportive but realistic
+
+MENTOR RESPONSE STYLE:
+
+- conversational
+- practical
+- operationally intelligent
+- easy to revise
+
+GOOD EXAMPLE:
+
+"Think of PSC this way:
+the flag state is supposed to control the ship.
+PSC exists because sometimes flag states fail."
+
+BAD EXAMPLE:
+
+"PSC is defined as Port State Control according to..."
+
+`;
+</file>
+
+<file path="lib/ai/responseModes/revisionMode.ts">
+export const revisionMode = `
+
+REVISION MODE
+
+You are not a textbook.
+
+You are a senior marine engineer,
+chief engineer,
+surveyor,
+and oral examiner
+teaching a junior officer onboard.
+
+IMPORTANT:
+
+Do NOT summarize mechanically.
+
+Do NOT repeat chunks literally.
+
+Do NOT sound like an AI assistant.
+
+INTERPRET the study material naturally.
+
+EXPLAIN:
+
+- what the regulation means onboard
+- why it exists
+- operational consequences
+- survey implications
+- oral exam expectations
+- common mistakes onboard
+- failure scenarios
+- practical application onboard ships
+
+Your explanations must:
+
+- feel operationally realistic
+- feel psychologically real
+- feel technically mature
+- connect theory with practice
+- teach decision making
+- teach cause and effect
+
+Avoid:
+
+- robotic bullet dumping
+- textbook phrasing
+- generic explanations
+- shallow summaries
+
+Prefer:
+
+- practical teaching
+- operational storytelling
+- examiner-style thinking
+- realistic onboard reasoning
+
+When discussing regulations:
+
+- explain intent
+- explain practical interpretation
+- explain what surveyors actually check
+- explain what engineers commonly miss
+
+When discussing machinery or systems:
+
+- explain failure patterns
+- explain symptoms
+- explain operational risks
+- explain troubleshooting logic
+
+Always prioritize:
+
+UNDERSTANDING
+over memorization.
+
+INTERPRETATION
+over repetition.
+
+REAL SHIPBOARD THINKING
+over textbook language.
+
+`;
+</file>
+
+<file path="lib/ai/responseModes/surveyorMode.ts">
+export const surveyorMode = `
+SURVEYOR RESPONSE MODE:
+
+- think like PSC inspector
+- focus on compliance failures
+- focus on detention risks
+- mention conventions naturally
+- explain deficiency seriousness
+- focus on operational compliance
+
+STYLE:
+
+- formal
+- strict
+- inspection-oriented
+- regulation-focused
+
+GOOD EXAMPLE:
+
+"A non-functional 15ppm alarm can become a detainable deficiency depending on severity."
+
+`;
+</file>
+
+<file path="lib/ai/retrieval/retrievalEngine.ts">
+import OpenAI from "openai";
+
+import { adminDb }
+    from "@/lib/firebaseAdmin";
+
+import { cosineSimilarity }
+    from "@/lib/cosineSimilarity";
+
+const openai =
+    new OpenAI({
+        apiKey:
+            process.env.OPENAI_API_KEY,
+    });
+
+
+type RetrievalInput = {
+    topicId: string;
+
+    message: string;
+
+    messages: {
+        role: string;
+        content: string;
+    }[];
+};
+
+
+export async function retrieveRelevantKnowledge({
+    topicId,
+    message,
+    messages,
+}: RetrievalInput) {
+    /* =========================
+      REWRITE QUERY
+   ========================= */
+
+    const latestMessages =
+        messages
+            .slice(-6)
+            .map((m) => `${m.role}: ${m.content}`)
+            .join("\n");
+
+    const rewritePrompt = `
+
+Conversation:
+${latestMessages}
+
+Current user message:
+${message}
+
+Rewrite the current message into a fully standalone maritime retrieval query.
+
+Rules:
+- Preserve maritime terminology
+- Expand abbreviations if obvious
+- Make vague follow-ups explicit
+- Keep it concise
+- Output ONLY the rewritten query
+
+`;
+
+    console.log(
+        "REWRITING QUERY"
+    );
+
+    const rewriteResponse =
+        await openai.chat.completions.create({
+
+            model:
+                "gpt-4.1-mini",
+
+            messages: [
+
+                {
+                    role: "system",
+
+                    content:
+                        "You convert vague maritime follow-up questions into standalone retrieval queries."
+                },
+
+                {
+                    role: "user",
+
+                    content:
+                        rewritePrompt
+                }
+            ]
+        });
+
+    const rewrittenQuery =
+        rewriteResponse
+            .choices[0]
+            .message
+            .content
+            ?.trim() || message;
+
+    console.log(
+        "REWRITTEN QUERY:",
+        rewrittenQuery
+    );
+
+    /* =========================
+       CREATE QUERY EMBEDDING
+    ========================= */
+
+    console.log(
+        "GENERATING QUESTION EMBEDDING"
+    );
+
+    const maritimeAcronyms: Record<string, string> = {
+
+        "esp":
+            "International Code on the Enhanced Programme of Inspections During Surveys of Bulk Carriers and Oil Tankers",
+
+        "psc":
+            "Port State Control",
+
+        "css":
+            "Cargo Securing Manual",
+
+        "cof":
+            "Certificate of Fitness",
+
+        "csm":
+            "Cargo Securing Manual",
+
+        "imsbc":
+            "International Maritime Solid Bulk Cargoes Code",
+
+        "igc":
+            "International Code for the Construction and Equipment of Ships Carrying Liquefied Gases in Bulk",
+
+        "ism":
+            "International Safety Management Code",
+
+        "isps":
+            "International Ship and Port Facility Security Code",
+
+        "solas":
+            "International Convention for the Safety of Life at Sea",
+
+        "marpol":
+            "International Convention for the Prevention of Pollution from Ships",
+
+    };
+
+    const embeddingResponse =
+        await openai.embeddings.create({
+            model:
+                "text-embedding-3-small",
+
+            input:
+                rewrittenQuery,
+        });
+
+    const queryEmbedding =
+        embeddingResponse
+            .data[0]
+            .embedding;
+
+    console.log(
+        "QUESTION EMBEDDING READY"
+    );
+
+    /* =========================
+       GET ALL CHUNKS
+    ========================= */
+
+    const chunksSnap =
+        await adminDb
+            .collection(
+                "globalFileChunks"
+            )
+            .where(
+                "topicId",
+                "==",
+                topicId
+            )
+            .get();
+
+    console.log(
+        "TOTAL CHUNKS:",
+        chunksSnap.size
+    );
+
+    /* =========================
+       SCORE CHUNKS
+    ========================= */
+
+    const scoredChunks =
+        chunksSnap.docs.map((doc) => {
+
+            const data =
+                doc.data();
+
+            console.log(
+                "CHUNK:",
+                data.text?.slice(0, 100)
+            );
+
+            console.log(
+                "EMBEDDING EXISTS:",
+                !!data.embedding
+            );
+
+            console.log(
+                "EMBEDDING LENGTH:",
+                data.embedding?.length
+            );
+
+            const similarity =
+                cosineSimilarity(
+                    queryEmbedding,
+                    data.embedding || []
+                );
+
+            return {
+
+                text:
+                    data.text || "",
+
+                similarity,
+
+                fileName:
+                    data.fileName || "",
+
+                chunkIndex:
+                    data.chunkIndex || 0,
+            };
+        });
+
+    /* =========================
+       SORT BEST FIRST
+    ========================= */
+
+    scoredChunks.sort(
+        (a, b) =>
+            b.similarity -
+            a.similarity
+    );
+
+    /* =========================
+       REMOVE DUPLICATES
+    ========================= */
+
+    const uniqueChunks =
+        Array.from(
+
+            new Map(
+
+                scoredChunks.map(
+                    (chunk) => [
+
+                        chunk.text
+                            .slice(0, 200),
+
+                        chunk,
+                    ]
+                )
+
+            ).values()
+
+        );
+
+    /* =========================
+       FILTER LOW QUALITY
+    ========================= */
+
+    const filteredChunks =
+        uniqueChunks.filter(
+            (chunk) =>
+                chunk.similarity > 0.35
+        );
+
+    /* =========================
+       FINAL TOP CHUNKS
+    ========================= */
+
+    const topChunks =
+        filteredChunks
+            .slice(0, 6);
+
+    console.log(
+        "TOP CHUNKS READY"
+    );
+
+    console.log(
+        "TOTAL RETRIEVED:",
+        topChunks.length
+    );
+
+    console.log(
+        "BEST SCORE:",
+        topChunks[0]?.similarity
+    );
+
+    console.log(
+        "BEST CHUNK:",
+        topChunks[0]?.text?.slice(
+            0,
+            500
+        )
+    );
+
+    console.log(
+        "TOP CHUNKS:",
+        topChunks.map(
+            (chunk) => ({
+                similarity:
+                    chunk.similarity,
+
+                file:
+                    chunk.fileName,
+
+                chunkIndex:
+                    chunk.chunkIndex,
+
+                preview:
+                    chunk.text.slice(
+                        0,
+                        150
+                    ),
+            })
+        )
+    );
+
+    /* =========================
+       CONTEXT COMPRESSION
+    ========================= */
+
+    const compressedContext =
+        topChunks
+            .map(
+                (chunk, index) => `
+
+=== RELEVANT CONTEXT ${index + 1} ===
+
+SOURCE FILE:
+${chunk.fileName}
+
+SIMILARITY SCORE:
+${chunk.similarity}
+
+CONTENT:
+${chunk.text}
+
+`
+            )
+            .join("\n\n");
+
+    console.log(
+        "COMPRESSED CONTEXT LENGTH:",
+        compressedContext.length
+    );
+
+    /* =========================
+       RETURN FINAL CONTEXT
+    ========================= */
+
+    return compressedContext;
+}
+</file>
+
+<file path="lib/ai/topics/topicProfiles.ts">
+export const topicProfiles= {
+    imo: `
+TOPIC:
+International Maritime Organization (IMO)
+
+TOPIC DESCRIPTION:
+United Nations specialized agency responsible for maritime safety, security, environmental protection, and international shipping regulations.
+
+KEYWORDS:
+IMO
+SOLAS
+MARPOL
+STCW
+PSC
+Port State Control
+Flag State
+ISM
+ISPS
+MLC
+conventions
+marine pollution
+safety at sea
+international shipping
+audits
+detention
+classification society
+
+CORE CONCEPTS:
+- maritime regulations
+- international conventions
+- ship safety
+- marine environmental protection
+- compliance
+- certification
+- port state inspections
+- maritime governance
+- shipping law
+- safety management systems
+`,
+
+};
+</file>
+
+<file path="lib/cosineSimilarity.ts">
+export function cosineSimilarity(
+    a: number[],
+    b: number[]
+) {
+
+    if (a.length !== b.length) {
+        return 0;
+    }
+
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+
+    for (let i = 0; i < a.length; i++) {
+
+        dotProduct += a[i] * b[i];
+
+        normA += a[i] * a[i];
+
+        normB += b[i] * b[i];
+    }
+
+    normA = Math.sqrt(normA);
+    normB = Math.sqrt(normB);
+
+    if (normA === 0 || normB === 0) {
+        return 0;
+    }
+
+    return dotProduct / (normA * normB);
+}
+</file>
+
+<file path="lib/extractPdfText.ts">
+export const extractPdfText =
+  async (file: File) => {
+
+    const pdfjsLib =
+      await import("pdfjs-dist");
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "/pdf.worker.min.mjs";
+
+    const arrayBuffer =
+      await file.arrayBuffer();
+
+    const pdf =
+      await pdfjsLib.getDocument({
+        data: arrayBuffer,
+      }).promise;
+
+    let fullText = "";
+
+    for (
+      let pageNum = 1;
+      pageNum <= pdf.numPages;
+      pageNum++
+    ) {
+
+      const page =
+        await pdf.getPage(pageNum);
+
+      const textContent =
+        await page.getTextContent();
+
+      const textItems =
+        textContent.items
+          .map((item: any) => item.str)
+          .join(" ");
+
+      fullText +=
+        `\n\n${textItems}`;
+    }
+
+    return fullText;
+  };
+</file>
+
+<file path="lib/firebaseAdmin.ts">
+import admin from "firebase-admin";
+
+const serviceAccount = {
+  projectId:
+    process.env.FIREBASE_PROJECT_ID,
+
+  clientEmail:
+    process.env.FIREBASE_CLIENT_EMAIL,
+
+  privateKey:
+    process.env.FIREBASE_PRIVATE_KEY?.replace(
+      /\\n/g,
+      "\n"
+    ),
+};
+
+if (!admin.apps.length) {
+
+  admin.initializeApp({
+    credential:
+      admin.credential.cert(
+        serviceAccount as admin.ServiceAccount
+      ),
+  });
+
+}
+
+export const adminDb =
+  admin.firestore();
+</file>
+
+<file path="lib/localFiles.ts">
+import localforage from "localforage";
+
+export type LocalStudyFile = {
+  id: string;
+
+  topicId: string;
+
+  name: string;
+
+  type: string;
+
+  extractedText: string;
+
+  uploadedAt: number;
+};
+
+/* =========================
+   STORAGE INSTANCE
+========================= */
+
+const studyFilesStore =
+  localforage.createInstance({
+    name: "navik-study-files",
+  });
+
+/* =========================
+   SAVE FILE
+========================= */
+
+export const saveStudyFile =
+  async (
+    file: LocalStudyFile
+  ) => {
+
+    await studyFilesStore.setItem(
+      file.id,
+      file
+    );
+  };
+
+/* =========================
+   GET FILES BY TOPIC
+========================= */
+
+export const getStudyFilesByTopic =
+  async (topicId: string) => {
+
+    const files:
+      LocalStudyFile[] = [];
+
+    await studyFilesStore.iterate(
+      (value: any) => {
+
+        if (
+          value.topicId === topicId
+        ) {
+          files.push(value);
+        }
+      }
+    );
+
+    return files.sort(
+      (a, b) =>
+        b.uploadedAt -
+        a.uploadedAt
+    );
+  };
+
+/* =========================
+   DELETE FILE
+========================= */
+
+export const deleteStudyFile =
+  async (id: string) => {
+
+    await studyFilesStore.removeItem(
+      id
+    );
+  };
+</file>
+
+<file path="lib/firebase.ts">
+import { initializeApp } from "firebase/app";
+
+import { getFirestore } from "firebase/firestore";
+
+import { getAuth } from "firebase/auth";
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyD-CQ6PEYCUip5McM5lPp07GK7vOGaamIc",
+
+  authDomain: "navik-c4443.firebaseapp.com",
+
+  projectId: "navik-c4443",
+
+  storageBucket: "navik-c4443.firebasestorage.app",
+
+  messagingSenderId: "394338096150",
+
+  appId: "1:394338096150:web:2482d814ce430a7d371137",
+
+  measurementId: "G-006YE7FHJZ",
+
+};
+
+const app =
+  initializeApp(firebaseConfig);
+
+export const auth =
+  getAuth(app);
+
+export const db =
+  getFirestore(app);
+</file>
+
+<file path="app/api/chat/route.ts">
+import OpenAI from "openai";
+
+import { adminDb }
+    from "@/lib/firebaseAdmin";
+
+import { navikCoreIdentity }
+    from "@/lib/ai/personas/navikCoreIdentity";
+
+import { topicProfiles }
+    from "@/lib/ai/topics/topicProfiles";
+
+import { retrieveRelevantKnowledge }
+    from "@/lib/ai/retrieval/retrievalEngine";
+
+import { buildSystemPrompt }
+    from "@/lib/ai/orchestrator/orchestrator";
+
+import { buildConversationMemory }
+    from "@/lib/ai/memory/buildConversationMemory";
+
+import { postProcessResponse }
+    from "@/lib/ai/postprocess/postProcessResponse";
+
+const openai =
+    new OpenAI({
+        apiKey:
+            process.env.OPENAI_API_KEY,
+    });
+
+export async function POST(
+    req: Request
+) {
+
+    try {
+
+        console.log("CHAT API START");
+
+        const body =
+            await req.json();
+
+        console.log("BODY:", body);
+
+        const {
+            topicId,
+            message,
+
+
+
+            messages = [],
+
+            useQuestions,
+            useTranscripts,
+            useGlobalFiles,
+            useLocalFiles,
+
+            uploadedFiles = [],
+        } = body;
+
+        /* =========================
+    QUESTIONS
+ ========================= */
+
+        let questionsText = "";
+
+        if (useQuestions) {
+
+            const questionsSnap =
+                await adminDb
+                    .collection(
+                        "questions"
+                    )
+                    .where(
+                        "topicId",
+                        "==",
+                        topicId
+                    )
+                    .get();
+
+            questionsText =
+                questionsSnap.docs
+                    .map((doc: any) => {
+
+                        const data =
+                            doc.data();
+
+                        return `
+Q:
+${data.question || data.q}
+
+A:
+${data.answer || data.a}
+`;
+                    })
+                    .join("\n\n");
+        }
+
+        /* =========================
+           TRANSCRIPTS
+        ========================= */
+
+        let transcriptsText = "";
+
+        if (useTranscripts) {
+
+            const transcriptsSnap =
+                await adminDb
+                    .collection(
+                        "transcripts"
+                    )
+                    .where(
+                        "topicId",
+                        "==",
+                        topicId
+                    )
+                    .get();
+
+            transcriptsText =
+                transcriptsSnap.docs
+                    .map((doc: any) => {
+
+                        const data =
+                            doc.data();
+
+                        return (
+                            data.text ||
+                            data.transcript ||
+                            data.content ||
+                            ""
+                        );
+                    })
+                    .join("\n\n");
+        }
+
+        /* =========================
+           LOCAL FILES
+        ========================= */
+
+        let localFilesText = "";
+
+        if (useLocalFiles) {
+
+            localFilesText =
+                uploadedFiles
+                    .map(
+                        (file: any) =>
+                            `
+FILE:
+${file.name}
+
+CONTENT:
+${file.extractedText}
+`
+                    )
+                    .join("\n\n");
+        }
+
+        const relevantChunksText =
+            useGlobalFiles
+                ? await retrieveRelevantKnowledge({
+                    topicId,
+                    message,
+                    messages,
+                })
+                : "";
+
+
+        /* =========================
+           FINAL KNOWLEDGE
+        ========================= */
+
+        const knowledge = `
+QUESTIONS:
+${questionsText}
+
+TRANSCRIPTS:
+${transcriptsText}
+
+SEMANTIC SEARCH RESULTS:
+${relevantChunksText}
+
+`;
+
+        console.log("QUESTIONS LENGTH:", questionsText.length);
+
+        console.log("TRANSCRIPTS LENGTH:", transcriptsText.length);
+
+        console.log("LOCAL FILES LENGTH:", localFilesText.length);
+
+        console.log("FILTERS:", {
+            useQuestions,
+            useTranscripts,
+            useGlobalFiles,
+            useLocalFiles,
+        });
+        console.log(
+            "KNOWLEDGE LENGTH:",
+            knowledge.length
+        );
+
+
+        /* GET TOPIC PROFILE */
+
+        const topicDoc =
+            await adminDb
+                .collection("topics")
+                .doc(topicId)
+                .get();
+
+        const topicData =
+            topicDoc.data();
+
+        const topicProfileKey =
+            topicData?.topicProfile ||
+            "general";
+
+        const activeTopicProfile =
+            topicProfiles[
+            topicProfileKey as keyof typeof topicProfiles
+            ] ||
+            `
+GENERAL MARITIME TOPIC
+
+Focus only on:
+- maritime operations
+- marine engineering
+- oral preparation
+- shipboard safety
+- maritime regulations
+`;
+
+
+        /* =========================
+TOPIC VALIDATOR
+========================= */
+
+        const topicValidationPrompt = `
+You are a maritime topic relevance validator.
+
+Your task:
+Determine whether the USER QUESTION
+belongs to the SAME MARITIME TOPIC
+as the CURRENT TOPIC MATERIALS.
+
+IMPORTANT:
+
+The user does NOT need to use
+exact wording from the study materials.
+
+The question may be:
+- conceptual
+- operational
+- oral-exam style
+- troubleshooting based
+- regulation related
+- abbreviation related
+- convention related
+- practical shipboard interpretation
+- safety related
+- survey related
+- machinery related
+- maritime foundational theory
+
+Allow:
+- follow-up questions
+- broader understanding questions
+- "what is this" questions
+- "why is this important" questions
+- regulation explanation questions
+- convention/source questions
+- onboard application questions
+
+Reject ONLY if the question is:
+- completely unrelated to maritime industry
+- pure coding/programming
+- celebrity/politics/entertainment
+- unrelated academic subjects
+- random non-maritime discussion
+
+IMPORTANT:
+
+If the USER QUESTION is logically connected
+to the maritime topic,
+return YES.
+
+Even if:
+- exact wording is absent
+- semantic wording differs
+- user asks foundational understanding
+
+Return ONLY:
+YES
+or
+NO
+
+CURRENT TOPIC PROFILE:
+${activeTopicProfile}
+
+CURRENT STUDY MATERIALS:
+${knowledge}
+
+USER QUESTION:
+${message}
+`;
+
+        /* =========================
+           VALIDATE TOPIC
+        ========================= */
+
+        const validationCompletion =
+            await openai.chat.completions.create({
+                model:
+                    "gpt-4.1-nano-2025-04-14",
+
+                messages: [
+                    {
+                        role: "user",
+                        content:
+                            topicValidationPrompt,
+                    },
+                ],
+
+                max_tokens: 5,
+            });
+
+        const validationReply =
+            validationCompletion
+                .choices[0]
+                ?.message
+                ?.content
+                ?.trim()
+                ?.toUpperCase();
+
+        console.log(
+            "TOPIC VALIDATION:",
+            validationReply
+        );
+
+        /* =========================
+           TOPIC REJECTION
+        ========================= */
+
+        if (
+            validationReply !== "YES"
+        ) {
+
+            return Response.json({
+                reply:
+                    "This question is outside the current topic study materials.",
+            });
+        }
+
+
+        console.log(
+            "CALLING OPENAI"
+        );
+
+        const recentMessages =
+            messages
+                .filter(
+                    (msg: any) =>
+                        typeof msg.content ===
+                        "string"
+                )
+                .slice(-12);
+
+        console.log(
+            "CONVERSATION MEMORY:",
+            recentMessages.length
+        );
+
+        const conversationHistory =
+            recentMessages.map((msg: any) => ({
+
+                role: msg.role,
+
+                content:
+                    typeof msg.content === "string"
+                        ? msg.content.slice(0, 3000)
+                        : "",
+            }));
+
+        /* =========================
+           CONVERSATION MEMORY
+        ========================= */
+
+        const conversationMemory =
+            buildConversationMemory({
+                messages:
+                    conversationHistory,
+            });
+
+        /* =========================
+           SYSTEM PROMPT
+        ========================= */
+
+        const prompt =
+            buildSystemPrompt({
+                message,
+                topicProfileKey,
+                knowledge,
+                conversationMemory,
+                navikIdentity:
+                    navikCoreIdentity,
+            });
+
+        const completion =
+            await openai.chat.completions.create({
+                model:
+                    "gpt-4.1-nano-2025-04-14",
+
+                messages: [
+                    {
+                        role: "system",
+                        content: prompt,
+                    },
+
+                    ...conversationHistory,
+                ],
+                temperature: 0.3,
+
+                max_tokens: 900,
+            });
+
+        console.log(
+            "OPENAI SUCCESS"
+        );
+
+        const rawReply =
+            completion.choices[0]
+                ?.message
+                ?.content;
+
+        const cleanedReply =
+            typeof rawReply === "string"
+                ? rawReply.trim()
+                : "No valid response generated.";
+
+        const reply =
+            postProcessResponse({
+                response:
+                    cleanedReply,
+            });
+
+        return Response.json({
+            reply,
+        });
+
+    } catch (error: any) {
+
+        console.error(
+            "CHAT API ERROR:",
+            error
+        );
+
+        return Response.json(
+            {
+                error:
+                    error.message ||
+                    "Server error",
+            },
+            {
+                status: 500,
+            }
+        );
+    }
+}
+</file>
+
+<file path="app/chat/[topicId]/page.tsx">
+"use client";
+
+import ReactMarkdown from "react-markdown";
+
+import { useEffect, useState, useRef } from "react";
+
+import { useParams, useRouter }
+    from "next/navigation";
+
+import {
+    ArrowLeft,
+    Sailboat,
+    Home,
+    BookOpen,
+    Bot,
+    MessageCircle,
+} from "lucide-react";
+
+import {
+    doc,
+    getDoc,
+} from "firebase/firestore";
+
+import { db }
+    from "@/lib/firebase";
+
+
+
+import {
+    getStudyFilesByTopic,
+    LocalStudyFile,
+} from "@/lib/localFiles";
+
+import LoadingScreen from "@/components/LoadingScreen";
+
+export default function ChatPage() {
+
+    const params =
+        useParams();
+
+    const router = useRouter();
+
+    const [useQuestions, setUseQuestions] =
+        useState(true);
+
+    const [useTranscripts, setUseTranscripts] =
+        useState(true);
+
+    const [useGlobalFiles, setUseGlobalFiles] =
+        useState(true);
+
+    const [useLocalFiles, setUseLocalFiles] =
+        useState(true);
+
+    const [pageLoading, setPageLoading] =
+        useState(true);
+
+    const topicId =
+        params.topicId as string;
+
+    const [topicName, setTopicName] =
+        useState("");
+
+    const [message, setMessage] =
+        useState("");
+
+    const [messages, setMessages] =
+        useState<
+            {
+                role: string;
+                content: string;
+            }[]
+        >([]);
+
+    const [loading, setLoading] =
+        useState(false);
+
+    const [localFiles, setLocalFiles] =
+        useState<LocalStudyFile[]>([]);
+
+    const messagesEndRef =
+        useRef<HTMLDivElement | null>(null);
+
+    const sendMessage =
+        async () => {
+
+            if (
+                !message.trim() ||
+                loading
+            ) return;
+
+            setLoading(true);
+
+            const userMessage = {
+                role: "user",
+                content: message,
+            };
+
+            const updatedMessages = [
+                ...messages,
+                userMessage,
+            ];
+
+            setMessages(updatedMessages);
+
+            const currentMessage =
+                message;
+
+            setMessage("");
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/api/chat",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
+                            },
+
+                            body: JSON.stringify({
+                                topicId,
+                                message:
+                                    currentMessage,
+
+                                messages: [
+                                    ...messages,
+                                    userMessage,
+                                ],
+
+                                useQuestions,
+                                useTranscripts,
+                                useGlobalFiles,
+                                useLocalFiles,
+
+                                uploadedFiles:
+                                    useLocalFiles
+                                        ? localFiles
+                                        : [],
+                            }),
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.error ||
+                        "Request failed"
+                    );
+                }
+
+                setMessages((prev) => [
+                    ...prev,
+                    {
+                        role: "assistant",
+                        content:
+                            data.reply ||
+                            "No response received.",
+                    },
+                ]);
+
+            } catch (error: any) {
+
+                console.error(error);
+
+                setMessages((prev) => [
+                    ...prev,
+                    {
+                        role: "assistant",
+                        content:
+                            error.message ||
+                            "Something went wrong.",
+                    },
+                ]);
+
+            } finally {
+
+                setLoading(false);
+            }
+        };
+
+
+
+    useEffect(() => {
+
+        const loadData = async () => {
+
+            try {
+
+                /* LOCAL FILES */
+
+                const files =
+                    await getStudyFilesByTopic(
+                        topicId
+                    );
+
+                setLocalFiles(files);
+
+                /* TOPIC */
+
+                const topicRef =
+                    doc(
+                        db,
+                        "topics",
+                        topicId
+                    );
+
+                const topicSnap =
+                    await getDoc(topicRef);
+
+                if (topicSnap.exists()) {
+
+                    const data =
+                        topicSnap.data();
+
+                    setTopicName(
+                        data.title || ""
+                    );
+                }
+
+            } finally {
+
+                setPageLoading(false);
+            }
+        };
+
+        loadData();
+
+    }, [topicId]);
+
+    useEffect(() => {
+
+        messagesEndRef.current
+            ?.scrollIntoView({
+                behavior: "smooth",
+            });
+
+    }, [messages, loading]);
+
+    if (pageLoading) {
+        return <LoadingScreen />;
+    }
+
+    return (
+
+        <main className="min-h-screen bg-[#f5f5f5] text-black pb-40">
+
+            <div className="max-w-md mx-auto px-5 pt-5">
+
+                {/* HEADER */}
+
+                <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm mb-4">
+
+                    {/* TOP */}
+
+                    <div className="flex items-center justify-between mb-6">
+
+                        <button
+                            onClick={() =>
+                                router.push(
+                                    `/questions/${topicId}`
+                                )
+                            }
+                            className="w-11 h-11 rounded-2xl border border-gray-200 bg-white flex items-center justify-center"
+                        >
+                            <ArrowLeft size={20} />
+                        </button>
+
+                        <div className="w-12 h-12 flex items-center justify-center rotate-[-8deg]">
+
+                            <Sailboat
+                                size={30}
+                                strokeWidth={2}
+                                className="text-black"
+                            />
+
+                        </div>
+
+                    </div>
+
+                    {/* TITLE */}
+
+                    <div>
+
+                        <h1 className="text-3xl font-bold leading-tight">
+                            {topicName}
+                        </h1>
+
+                        <p className="text-gray-500 mt-2 leading-6">
+                            Ask anything about this topic
+                        </p>
+
+                        <div className="mt-5 border-l-4 border-cyan-500 pl-4">
+
+                            <p className="text-base md:text-lg font-medium italic text-gray-700 leading-7">
+
+                                “Learn Faster —
+                                <span className="text-cyan-600 font-semibold">
+                                    {" "}Ask Better Questions.
+                                </span>
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {/* SOURCES */}
+
+                <div className="bg-white rounded-3xl border border-gray-200 p-5 mb-5">
+
+                    <h2 className="font-bold mb-4">
+                        Chat Sources
+                    </h2>
+
+                    <div className="space-y-3">
+
+                        <label className="flex items-center gap-3">
+
+                            <input
+                                type="checkbox"
+                                checked={useQuestions}
+                                onChange={() =>
+                                    setUseQuestions(
+                                        !useQuestions
+                                    )
+                                }
+                            />
+
+                            <span>
+                                Questions & Answers
+                            </span>
+
+                        </label>
+
+                        <label className="flex items-center gap-3">
+
+                            <input
+                                type="checkbox"
+                                checked={useTranscripts}
+                                onChange={() =>
+                                    setUseTranscripts(
+                                        !useTranscripts
+                                    )
+                                }
+                            />
+
+                            <span>
+                                Transcripts
+                            </span>
+
+                        </label>
+
+                        <label className="flex items-center gap-3">
+
+                            <input
+                                type="checkbox"
+                                checked={useGlobalFiles}
+                                onChange={() =>
+                                    setUseGlobalFiles(
+                                        !useGlobalFiles
+                                    )
+                                }
+                            />
+
+                            <span>
+                                Approved Global Files
+                            </span>
+
+                        </label>
+
+                        <label className="flex items-center gap-3">
+
+                            <input
+                                type="checkbox"
+                                checked={useLocalFiles}
+                                onChange={() =>
+                                    setUseLocalFiles(
+                                        !useLocalFiles
+                                    )
+                                }
+                            />
+
+                            <span>
+                                Local Uploaded Files
+                            </span>
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+                {/* CHAT */}
+
+                <div className="space-y-4 mb-40">
+
+                    {messages.map(
+                        (msg, i) => (
+
+                            <div
+                                key={i}
+                                className={`p-4 rounded-3xl leading-7 ${msg.role === "user"
+                                    ? "bg-black text-white ml-10"
+                                    : "bg-white border border-gray-200 mr-10"
+                                    }`}
+                            >
+
+                                <ReactMarkdown
+                                    components={{
+
+                                        h1: ({ children }) => (
+                                            <h1 className="text-3xl font-bold mb-4">
+                                                {children}
+                                            </h1>
+                                        ),
+
+                                        h2: ({ children }) => (
+                                            <h2 className="text-2xl font-semibold mt-6 mb-3">
+                                                {children}
+                                            </h2>
+                                        ),
+
+                                        h3: ({ children }) => (
+                                            <h3 className="text-xl font-semibold mt-4 mb-2">
+                                                {children}
+                                            </h3>
+                                        ),
+
+                                        p: ({ children }) => (
+                                            <p className="mb-4">
+                                                {children}
+                                            </p>
+                                        ),
+
+                                        ul: ({ children }) => (
+                                            <ul className="list-disc pl-6 mb-4">
+                                                {children}
+                                            </ul>
+                                        ),
+
+                                        ol: ({ children }) => (
+                                            <ol className="list-decimal pl-6 mb-4">
+                                                {children}
+                                            </ol>
+                                        ),
+
+                                        li: ({ children }) => (
+                                            <li className="mb-2">
+                                                {children}
+                                            </li>
+                                        ),
+
+                                        strong: ({ children }) => (
+                                            <strong className="font-bold">
+                                                {children}
+                                            </strong>
+                                        ),
+
+                                        code: ({ children }) => (
+                                            <code className="bg-gray-200 px-1 py-0.5 rounded">
+                                                {children}
+                                            </code>
+                                        ),
+                                    }}
+                                >
+                                    {msg.content}
+                                </ReactMarkdown>
+
+                            </div>
+
+                        )
+                    )}
+
+                    {loading && (
+
+                        <div className="bg-white border border-gray-200 rounded-3xl p-4 mr-10">
+
+                            Thinking...
+
+                        </div>
+
+                    )}
+
+                    <div ref={messagesEndRef} />
+
+                </div>
+
+            </div>
+
+            {/* INPUT */}
+
+            <div className="fixed bottom-20 left-0 right-0 px-4 z-40">
+
+                <div className="max-w-md mx-auto bg-white border border-gray-200 rounded-3xl p-3 shadow-lg flex gap-3">
+
+                    <input
+                        value={message}
+                        onChange={(e) =>
+                            setMessage(
+                                e.target.value
+                            )
+                        }
+                        onKeyDown={(e) => {
+
+                            if (e.key === "Enter") {
+                                sendMessage();
+                            }
+                        }}
+                        placeholder="Ask anything..."
+                        className="flex-1 outline-none px-2 bg-transparent"
+                    />
+
+                    <button
+                        onClick={sendMessage}
+                        disabled={loading}
+                        className="bg-black text-white px-5 py-3 rounded-2xl disabled:opacity-50"
+                    >
+
+                        Send
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            {/* BOTTOM NAV */}
+
+            <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-sm z-40">
+
+                <div className="max-w-md mx-auto flex items-center justify-around py-3">
+
+                    {/* HOME */}
+
+                    <button
+                        onClick={() =>
+                            router.push("/")
+                        }
+                        className="flex flex-col items-center justify-center text-gray-500"
+                    >
+
+                        <Home size={22} />
+
+                        <span className="text-xs mt-1">
+                            Home
+                        </span>
+
+                    </button>
+
+                    {/* QUESTIONS */}
+
+                    <button
+                        onClick={() =>
+                            router.push(
+                                `/questions/${topicId}`
+                            )
+                        }
+                        className="flex flex-col items-center justify-center text-gray-500"
+                    >
+
+                        <MessageCircle size={22} />
+
+                        <span className="text-xs mt-1">
+                            Questions
+                        </span>
+
+                    </button>
+
+                    {/* REVISION */}
+
+                    <button
+                        onClick={() =>
+                            router.push(
+                                `/revision/${topicId}`
+                            )
+                        }
+                        className="flex flex-col items-center justify-center text-gray-500"
+                    >
+
+                        <BookOpen size={22} />
+
+                        <span className="text-xs mt-1">
+                            Revision
+                        </span>
+
+                    </button>
+
+                    {/* CHAT */}
+
+                    <button
+                        className="flex flex-col items-center justify-center text-cyan-600"
+                    >
+
+                        <Bot size={22} />
+
+                        <span className="text-xs mt-1">
+                            NAVIK BRO
+                        </span>
+
+                    </button>
+
+                </div>
+
+            </nav>
+
+        </main>
+    );
+}
+</file>
+
+</files>

@@ -37,7 +37,7 @@ export default function RootLayout({
   children,
 }: Readonly<{
   children:
-    React.ReactNode;
+  React.ReactNode;
 }>) {
 
   return (
@@ -50,7 +50,7 @@ export default function RootLayout({
 
         <Script
           src="https://checkout.razorpay.com/v1/checkout.js"
-          strategy="beforeInteractive"
+          strategy="lazyOnload"
         />
 
         {children}

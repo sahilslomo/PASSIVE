@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import {
   Home,
@@ -30,18 +30,48 @@ import {
   signOut,
 } from "firebase/auth";
 
-import {
-  doc,
-  onSnapshot,
-  updateDoc,
-  increment,
-  setDoc,
-} from "firebase/firestore";
+import { auth, rtdb } from "@/lib/firebase";
 
-import { auth, db } from "@/lib/firebase";
+import type { User as FirebaseUser }
+  from "firebase/auth";
+
+import {
+  ref,
+  set,
+  get,
+  onDisconnect,
+  remove,
+} from "firebase/database";
+
+/* =========================
+    FUNCTIONS DATA
+ ========================= */
+
+const functions = [
+  {
+    code: "FN3",
+    title: "SAFETY",
+    desc: "IMO, MLC, UNCLOS, ETC",
+  },
+  {
+    code: "FN4B",
+    title: "MOTOR",
+    desc: "PISTON, LINER, ETC",
+  },
+  {
+    code: "FN5",
+    title: "ELECTRICAL",
+    desc:
+      "EARTH FAULT, ICCP, ETC",
+  },
+  {
+    code: "FN6",
+    title: "MEP",
+    desc: "MAC, STP, FWG, ETC",
+  },
+];
 
 export default function HomePage() {
-  const router = useRouter();
 
   /* =========================
      STATES
@@ -58,9 +88,10 @@ export default function HomePage() {
   const [isSignup, setIsSignup] =
     useState(false);
 
-  const [user, setUser] = useState<any>(
-    null
-  );
+  const [user, setUser] =
+    useState<FirebaseUser | null>(
+      null
+    );
 
   const [loading, setLoading] =
     useState(false);
@@ -73,32 +104,17 @@ export default function HomePage() {
 
   const [stats, setStats] = useState([
     {
-      icon: (
-        <Users
-          size={22}
-          strokeWidth={2.2}
-        />
-      ),
+      type: "users",
       value: "0",
       text: "users online",
     },
     {
-      icon: (
-        <BookOpen
-          size={22}
-          strokeWidth={2.2}
-        />
-      ),
+      type: "topics",
       value: "0",
       text: "topics viewed",
     },
     {
-      icon: (
-        <MessageCircleMore
-          size={22}
-          strokeWidth={2.2}
-        />
-      ),
+      type: "questions",
       value: "0",
       text: "questions viewed",
     },
@@ -107,80 +123,36 @@ export default function HomePage() {
   /* =========================
     AUTH STATE
  ========================= */
-
   useEffect(() => {
-    let counted = false;
 
-    const incrementUser = async () => {
-      try {
-        await updateDoc(
-          doc(db, "analytics", "live"),
-          {
-            usersOnline: increment(1),
-          }
-        );
-      } catch {
-        await setDoc(
-          doc(db, "analytics", "live"),
-          {
-            usersOnline: 1,
-            topicsViewedHour: 0,
-            questionsViewedHour: 0,
-          }
-        );
-      }
-    };
+    const unsubscribe =
+      onAuthStateChanged(
+        auth,
+        async (currentUser) => {
 
-    const decrementUser = async () => {
-      if (!counted) return;
+          setUser(currentUser);
 
-      counted = false;
+          if (!currentUser) return;
 
-      try {
-        await updateDoc(
-          doc(db, "analytics", "live"),
-          {
-            usersOnline: increment(-1),
-          }
-        );
-      } catch (error) {
-        console.error(error);
-      }
-    };
+          const userStatusRef = ref(
+            rtdb,
+            `onlineUsers/${currentUser.uid}`
+          );
 
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      async (currentUser) => {
-        setUser(currentUser);
+          await set(userStatusRef, {
+            online: true,
+            email: currentUser.email,
+            lastSeen: Date.now(),
+          });
 
-        if (currentUser && !counted) {
-          counted = true;
-          await incrementUser();
+          onDisconnect(
+            userStatusRef
+          ).remove();
         }
-
-        if (!currentUser) {
-          await decrementUser();
-        }
-      }
-    );
-
-    const handleUnload = () => {
-      decrementUser();
-    };
-
-    window.addEventListener(
-      "beforeunload",
-      handleUnload
-    );
-
-    return () => {
-      window.removeEventListener(
-        "beforeunload",
-        handleUnload
       );
 
-      unsubscribe();
-    };
+    return () => unsubscribe();
+
   }, []);
 
   /* =========================
@@ -188,57 +160,38 @@ export default function HomePage() {
   ========================= */
 
   useEffect(() => {
-    const unsub = onSnapshot(
-      doc(db, "analytics", "live"),
-      (snapshot) => {
-        const data = snapshot.data();
 
-        if (!data) return;
+    const loadUsers = async () => {
 
-        setStats([
-          {
-            icon: (
-              <Users
-                size={22}
-                strokeWidth={2.2}
-              />
-            ),
-            value: String(
-              data.usersOnline || 0
-            ),
-            text: "users online",
-          },
-          {
-            icon: (
-              <BookOpen
-                size={22}
-                strokeWidth={2.2}
-              />
-            ),
-            value: String(
-              data.topicsViewedHour || 0
-            ),
-            text:
-              "topics viewed",
-          },
-          {
-            icon: (
-              <MessageCircleMore
-                size={22}
-                strokeWidth={2.2}
-              />
-            ),
-            value: String(
-              data.questionsViewedHour || 0
-            ),
-            text:
-              "questions viewed",
-          },
-        ]);
-      }
-    );
+      const snapshot =
+        await get(
+          ref(rtdb, "onlineUsers")
+        );
 
-    return () => unsub();
+      const data = snapshot.val();
+
+      const totalUsers =
+        data
+          ? Object.keys(data).length
+          : 0;
+
+      setStats((prev) => [
+
+        {
+          type: "users",
+          value: String(totalUsers),
+          text: "users online",
+        },
+
+        prev[1],
+
+        prev[2],
+
+      ]);
+    };
+
+    loadUsers();
+
   }, []);
 
   /* =========================
@@ -257,33 +210,6 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [stats.length]);
 
-  /* =========================
-     FUNCTIONS DATA
-  ========================= */
-
-  const functions = [
-    {
-      code: "FN3",
-      title: "SAFETY",
-      desc: "IMO, MLC, UNCLOS, ETC",
-    },
-    {
-      code: "FN4B",
-      title: "MOTOR",
-      desc: "PISTON, LINER, ETC",
-    },
-    {
-      code: "FN5",
-      title: "ELECTRICAL",
-      desc:
-        "EARTH FAULT, ICCP, ETC",
-    },
-    {
-      code: "FN6",
-      title: "MEP",
-      desc: "MAC, STP, FWG, ETC",
-    },
-  ];
 
   /* =========================
      GOOGLE LOGIN
@@ -391,33 +317,18 @@ export default function HomePage() {
 
   const handleLogout =
     async () => {
-      await signOut(auth);
-    };
 
-  /* =========================
-     FUNCTION CLICK
-  ========================= */
+      if (auth.currentUser) {
 
-  const handleFunctionClick =
-    (code: string) => {
-      if (!user) {
-        setShowAuth(true);
-        return;
+        const userStatusRef = ref(
+          rtdb,
+          `onlineUsers/${auth.currentUser.uid}`
+        );
+
+        await remove(userStatusRef);
       }
 
-      // NAVIGATE IMMEDIATELY
-      router.push(
-        `/topics/${selectedClass}/${code.toLowerCase()}`
-      );
-
-      // FIRESTORE IN BACKGROUND
-      updateDoc(
-        doc(db, "analytics", "live"),
-        {
-          topicsViewedHour:
-            increment(1),
-        }
-      ).catch(console.error);
+      await signOut(auth);
     };
 
   return (
@@ -465,6 +376,7 @@ export default function HomePage() {
               {/* USER */}
 
               {user ? (
+
                 <div className="flex items-center gap-2 flex-shrink-0">
 
                   <div className="bg-gray-100 px-4 py-2 rounded-2xl max-w-[110px] min-w-0">
@@ -480,9 +392,7 @@ export default function HomePage() {
                   </div>
 
                   <button
-                    onClick={
-                      handleLogout
-                    }
+                    onClick={handleLogout}
                     className="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center"
                   >
 
@@ -491,7 +401,9 @@ export default function HomePage() {
                   </button>
 
                 </div>
+
               ) : (
+
                 <button
                   onClick={() =>
                     setShowAuth(true)
@@ -504,6 +416,7 @@ export default function HomePage() {
                   Login
 
                 </button>
+
               )}
 
             </div>
@@ -553,13 +466,22 @@ export default function HomePage() {
 
               {functions.map(
                 (item, index) => (
-                  <button
+                  <Link
                     key={index}
-                    onClick={() =>
-                      handleFunctionClick(
-                        item.code
-                      )
-                    }
+                    href={`/topics/${selectedClass}/${item.code.toLowerCase()}`}
+                    prefetch={false}
+                    onClick={(e) => {
+
+                      if (!auth.currentUser) {
+
+                        e.preventDefault();
+
+                        setShowAuth(true);
+
+                        return;
+                      }
+
+                    }}
                     className="
 bg-white
 rounded-2xl
@@ -570,6 +492,7 @@ shadow-sm
 text-left
 transition-all
 duration-150
+block
 
 hover:shadow-md
 hover:-translate-y-1
@@ -590,9 +513,7 @@ active:translate-y-[2px]
 
                       <Folder
                         size={32}
-                        strokeWidth={
-                          1.8
-                        }
+                        strokeWidth={1.8}
                       />
 
                     </div>
@@ -605,7 +526,7 @@ active:translate-y-[2px]
                       {item.desc}
                     </p>
 
-                  </button>
+                  </Link>
                 )
               )}
 
@@ -637,8 +558,26 @@ active:translate-y-[2px]
 
                         <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-black">
 
-                          {item.icon}
+                          {item.type === "users" && (
+                            <Users
+                              size={22}
+                              strokeWidth={2.2}
+                            />
+                          )}
 
+                          {item.type === "topics" && (
+                            <BookOpen
+                              size={22}
+                              strokeWidth={2.2}
+                            />
+                          )}
+
+                          {item.type === "questions" && (
+                            <MessageCircleMore
+                              size={22}
+                              strokeWidth={2.2}
+                            />
+                          )}
                         </div>
 
                         <div className="h-[44px] flex flex-col justify-center">
@@ -791,13 +730,13 @@ active:translate-y-[2px]
 
               <div className="relative">
 
-              <BookOpen size={22} />
+                <BookOpen size={22} />
 
-               <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
+                <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
 
-                <Lock size={8} />
+                  <Lock size={8} />
 
-                 </div>
+                </div>
 
               </div>
 
@@ -820,13 +759,13 @@ active:translate-y-[2px]
 
               <div className="relative">
 
-              <Bot size={22} />
+                <Bot size={22} />
 
-               <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
+                <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
 
-                <Lock size={8} />
+                  <Lock size={8} />
 
-                 </div>
+                </div>
 
               </div>
 

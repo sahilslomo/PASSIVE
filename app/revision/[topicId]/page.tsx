@@ -20,6 +20,9 @@ import {
 
 import { db } from "@/lib/firebase";
 
+import { chunkText }
+    from "@/lib/ai/rag/chunkText";
+
 import {
     saveStudyFile,
     getStudyFilesByTopic,
@@ -531,6 +534,38 @@ LOAD TOPIC
 
                 const extractedText =
                     await extractPdfText(file);
+
+                console.log(
+                    "EXTRACTED TEXT:",
+                    extractedText
+                );
+
+                console.log(
+                    "TEXT LENGTH:",
+                    extractedText.length
+                );
+
+                console.log(extractedText);
+
+                const chunks =
+                    chunkText({
+                        text: extractedText
+                    });
+
+                console.log(
+                    "TOTAL CHUNKS:",
+                    chunks.length
+                );
+
+                console.log(
+                    "FIRST CHUNK:",
+                    chunks[0]
+                );
+
+                console.log(
+                    "ALL CHUNKS:",
+                    chunks
+                );
 
                 const studyFile = {
                     id:

@@ -4,7 +4,7 @@ import { adminDb }
     from "@/lib/firebaseAdmin";
 
 import { chunkText }
-    from "@/lib/chunkText";
+    from "@/lib/ai/rag/chunkText";
 
 import OpenAI from "openai";
 
@@ -40,6 +40,19 @@ export async function POST(
             );
         }
 
+        console.log(
+            "========================"
+        );
+
+        console.log(
+            "STARTING APPROVAL FLOW"
+        );
+
+        console.log(
+            "REQUEST ID:",
+            requestId
+        );
+
         /* =========================
            GET REQUEST DOC
         ========================= */
@@ -54,6 +67,10 @@ export async function POST(
 
         if (!requestDoc.exists) {
 
+            console.log(
+                "REQUEST DOC NOT FOUND"
+            );
+
             return NextResponse.json(
                 {
                     error:
@@ -65,21 +82,66 @@ export async function POST(
             );
         }
 
+        console.log(
+            "REQUEST DOC FOUND"
+        );
+
         const data =
             requestDoc.data();
+
+        /* =========================
+           VALIDATE TEXT
+        ========================= */
+
+        const extractedText =
+            data?.extractedText || "";
+
+        if (!extractedText) {
+
+            console.log(
+                "NO EXTRACTED TEXT FOUND"
+            );
+
+            return NextResponse.json(
+                {
+                    error:
+                        "No extracted text found",
+                },
+                {
+                    status: 400,
+                }
+            );
+        }
+
+        console.log(
+            "TEXT LENGTH:",
+            extractedText.length
+        );
 
         /* =========================
            CHUNK TEXT
         ========================= */
 
         const chunks =
-            chunkText(
-                data?.extractedText || ""
-            );
+            chunkText({
+                text:
+                    extractedText,
+            });
 
         console.log(
             "TOTAL CHUNKS:",
             chunks.length
+        );
+
+        console.log(
+            "FIRST CHUNK PREVIEW:"
+        );
+
+        console.log(
+            chunks[0]?.slice(
+                0,
+                300
+            )
         );
 
         /* =========================
@@ -99,14 +161,17 @@ export async function POST(
                         data?.fileName,
 
                     extractedText:
-                        data?.extractedText,
+                        extractedText,
 
                     createdAt:
                         Date.now(),
                 });
 
         console.log(
-            "GLOBAL FILE CREATED:",
+            "GLOBAL FILE CREATED:"
+        );
+
+        console.log(
             globalFileRef.id
         );
 
@@ -114,84 +179,202 @@ export async function POST(
            SAVE CHUNKS + EMBEDDINGS
         ========================= */
 
-       for (
-    let i = 0;
-    i < chunks.length;
-    i++
-) {
+        let savedCount = 0;
 
-    try {
+        let failedCount = 0;
+
+        for (
+            let i = 0;
+            i < chunks.length;
+            i++
+        ) {
+
+            try {
+
+                console.log(
+                    "===================="
+                );
+
+                console.log(
+                    "PROCESSING CHUNK:",
+                    i
+                );
+
+                const currentChunk =
+                    chunks[i];
+
+                if (
+                    !currentChunk
+                ) {
+
+                    console.log(
+                        "EMPTY CHUNK SKIPPED:",
+                        i
+                    );
+
+                    failedCount++;
+
+                    continue;
+                }
+
+                console.log(
+                    "CHUNK LENGTH:",
+                    currentChunk.length
+                );
+
+                console.log(
+                    "CHUNK PREVIEW:"
+                );
+
+                console.log(
+                    currentChunk.slice(
+                        0,
+                        200
+                    )
+                );
+
+                /* =========================
+                   GENERATE EMBEDDING
+                ========================= */
+
+                console.log(
+                    "GENERATING EMBEDDING:",
+                    i
+                );
+
+                const embeddingResponse =
+                    await openai.embeddings.create({
+                        model:
+                            "text-embedding-3-small",
+
+                        input:
+                            currentChunk,
+                    });
+
+                console.log(
+                    "EMBEDDING GENERATED:",
+                    i
+                );
+
+                const embedding =
+                    embeddingResponse
+                        .data[0]
+                        .embedding;
+
+                console.log(
+                    "EMBEDDING LENGTH:",
+                    embedding.length
+                );
+
+                console.log(
+                    "EMBEDDING SAMPLE:"
+                );
+
+                console.log(
+                    embedding.slice(
+                        0,
+                        5
+                    )
+                );
+
+                /* =========================
+                   SAVE CHUNK
+                ========================= */
+
+                console.log(
+                    "SAVING CHUNK:",
+                    i
+                );
+
+                await adminDb
+                    .collection(
+                        "globalFileChunks"
+                    )
+                    .add({
+                        globalFileId:
+                            globalFileRef.id,
+
+                        topicId:
+                            data?.topicId,
+
+                        fileName:
+                            data?.fileName,
+
+                        chunkIndex:
+                            i,
+
+                        text:
+                            currentChunk,
+
+                        embedding:
+                            embedding,
+
+                        createdAt:
+                            Date.now(),
+                    });
+
+                savedCount++;
+
+                console.log(
+                    "CHUNK SAVED:",
+                    i
+                );
+
+                console.log(
+                    "TOTAL SAVED:",
+                    savedCount
+                );
+
+            } catch (error) {
+
+                failedCount++;
+
+                console.error(
+                    "===================="
+                );
+
+                console.error(
+                    "CHUNK FAILED:",
+                    i
+                );
+
+                console.error(
+                    "FAILED COUNT:",
+                    failedCount
+                );
+
+                console.error(
+                    error
+                );
+            }
+        }
+
+        /* =========================
+           FINAL DEBUG
+        ========================= */
 
         console.log(
-            "PROCESSING CHUNK:",
-            i
-        );
-
-        const embeddingResponse =
-            await openai.embeddings.create({
-                model:
-                    "text-embedding-3-small",
-
-                input:
-                    chunks[i],
-            });
-
-        const embedding =
-            embeddingResponse
-                .data[0]
-                .embedding;
-
-        console.log(
-            "EMBEDDING LENGTH:",
-            embedding.length
+            "========================"
         );
 
         console.log(
-            "SAVING CHUNK:",
-            i
+            "PROCESS COMPLETE"
         );
-
-        await adminDb
-            .collection(
-                "globalFileChunks"
-            )
-            .add({
-                globalFileId:
-                    globalFileRef.id,
-
-                topicId:
-                    data?.topicId,
-
-                fileName:
-                    data?.fileName,
-
-                chunkIndex: i,
-
-                text:
-                    chunks[i],
-
-                embedding:
-                    embedding,
-
-                createdAt:
-                    Date.now(),
-            });
 
         console.log(
-            "CHUNK SAVED:",
-            i
+            "TOTAL CHUNKS:",
+            chunks.length
         );
 
-    } catch (error) {
-
-        console.error(
-            "CHUNK FAILED:",
-            i,
-            error
+        console.log(
+            "TOTAL SAVED:",
+            savedCount
         );
-    }
-}
-       
+
+        console.log(
+            "TOTAL FAILED:",
+            failedCount
+        );
 
         /* =========================
            MARK APPROVED
@@ -206,14 +389,34 @@ export async function POST(
                 approved: true,
             });
 
+        console.log(
+            "REQUEST APPROVED"
+        );
+
         return NextResponse.json({
             success: true,
+
+            totalChunks:
+                chunks.length,
+
+            savedChunks:
+                savedCount,
+
+            failedChunks:
+                failedCount,
         });
 
     } catch (error) {
 
         console.error(
-            "APPROVE ERROR:",
+            "========================"
+        );
+
+        console.error(
+            "APPROVE ERROR:"
+        );
+
+        console.error(
             error
         );
 

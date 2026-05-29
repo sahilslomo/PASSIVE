@@ -3,21 +3,23 @@ import OpenAI from "openai";
 import { adminDb }
     from "@/lib/firebaseAdmin";
 
-import { cosineSimilarity }
-    from "@/lib/cosineSimilarity";
-
 import { navikCoreIdentity }
-    from "@/lib/prompts/navikCoreIdentity";
+    from "@/lib/ai/personas/navikCoreIdentity";
 
-import { activeRoles }
-    from "@/lib/prompts/roles";
+import { topicProfiles }
+    from "@/lib/ai/topics/topicProfiles";
 
+import { retrieveRelevantKnowledge }
+    from "@/lib/ai/retrieval/retrievalEngine";
 
-import { detectRole }
-    from "@/lib/prompts/detectRole";
+import { buildSystemPrompt }
+    from "@/lib/ai/orchestrator/orchestrator";
 
-    import { topicProfiles }
-    from "@/lib/prompts/topicsProfiles";
+import { buildConversationMemory }
+    from "@/lib/ai/memory/buildConversationMemory";
+
+import { postProcessResponse }
+    from "@/lib/ai/postprocess/postProcessResponse";
 
 const openai =
     new OpenAI({
@@ -41,6 +43,10 @@ export async function POST(
         const {
             topicId,
             message,
+
+
+
+            messages = [],
 
             useQuestions,
             useTranscripts,
@@ -126,44 +132,6 @@ ${data.answer || data.a}
         }
 
         /* =========================
-           GLOBAL FILES
-        ========================= */
-
-        let globalFilesText = "";
-
-        if (useGlobalFiles) {
-
-            const globalFilesSnap =
-                await adminDb
-                    .collection(
-                        "globalFiles"
-                    )
-                    .where(
-                        "topicId",
-                        "==",
-                        topicId
-                    )
-                    .get();
-
-            globalFilesText =
-                globalFilesSnap.docs
-                    .map((doc: any) => {
-
-                        const data =
-                            doc.data();
-
-                        return `
-FILE:
-${data.fileName}
-
-CONTENT:
-${data.extractedText}
-`;
-                    })
-                    .join("\n\n");
-        }
-
-        /* =========================
            LOCAL FILES
         ========================= */
 
@@ -186,104 +154,15 @@ ${file.extractedText}
                     .join("\n\n");
         }
 
-        /* =========================
-           QUESTION EMBEDDING
-        ========================= */
+        const relevantChunksText =
+            useGlobalFiles
+                ? await retrieveRelevantKnowledge({
+                    topicId,
+                    message,
+                    messages,
+                })
+                : "";
 
-        let relevantChunksText = "";
-
-        if (useGlobalFiles) {
-
-            console.log(
-                "GENERATING QUESTION EMBEDDING"
-            );
-
-            const embeddingResponse =
-                await openai.embeddings.create({
-                    model:
-                        "text-embedding-3-small",
-
-                    input: message,
-                });
-
-            const questionEmbedding =
-                embeddingResponse
-                    .data[0]
-                    .embedding;
-
-            console.log(
-                "QUESTION EMBEDDING READY"
-            );
-
-            /* =========================
-               GET ALL CHUNKS
-            ========================= */
-
-            const chunksSnap =
-                await adminDb
-                    .collection(
-                        "globalFileChunks"
-                    )
-                    .where(
-                        "topicId",
-                        "==",
-                        topicId
-                    )
-                    .get();
-
-            console.log(
-                "TOTAL CHUNKS:",
-                chunksSnap.docs.length
-            );
-
-            const scoredChunks =
-                chunksSnap.docs.map((doc) => {
-
-                    const data =
-                        doc.data();
-
-                    const similarity =
-                        cosineSimilarity(
-                            questionEmbedding,
-                            data.embedding || []
-                        );
-
-                    return {
-                        text:
-                            data.text,
-
-                        similarity,
-                    };
-                });
-
-            /* =========================
-               SORT BEST MATCHES
-            ========================= */
-
-            scoredChunks.sort(
-                (a, b) =>
-                    b.similarity -
-                    a.similarity
-            );
-
-            const topChunks =
-                scoredChunks.slice(0, 5);
-
-            console.log(
-                "TOP CHUNKS:",
-                topChunks
-            );
-
-
-            relevantChunksText =
-                topChunks
-                    .map((c) => c.text)
-                    .join("\n\n");
-
-            console.log(
-                "TOP CHUNKS READY"
-            );
-        }
 
         /* =========================
            FINAL KNOWLEDGE
@@ -299,15 +178,11 @@ ${transcriptsText}
 SEMANTIC SEARCH RESULTS:
 ${relevantChunksText}
 
-LOCAL FILES:
-${localFilesText}
 `;
 
         console.log("QUESTIONS LENGTH:", questionsText.length);
 
         console.log("TRANSCRIPTS LENGTH:", transcriptsText.length);
-
-        console.log("GLOBAL FILES LENGTH:", globalFilesText.length);
 
         console.log("LOCAL FILES LENGTH:", localFilesText.length);
 
@@ -322,36 +197,36 @@ ${localFilesText}
             knowledge.length
         );
 
-        /* =========================
-    DETECT ACTIVE ROLE
- ========================= */
 
-        const detectedRole =
-            detectRole({
-                message,
-            });
+        /* GET TOPIC PROFILE */
 
-        console.log(
-            "DETECTED ROLE:",
-            detectedRole
-        );
+        const topicDoc =
+            await adminDb
+                .collection("topics")
+                .doc(topicId)
+                .get();
 
-        /* =========================
-           ACTIVE ROLE PROMPT
-        ========================= */
+        const topicData =
+            topicDoc.data();
 
-        const rolePrompt =
-            activeRoles[
-            detectedRole as keyof typeof activeRoles
-            ];
-
-
-        /* =========================
-ACTIVE TOPIC PROFILE
-========================= */
+        const topicProfileKey =
+            topicData?.topicProfile ||
+            "general";
 
         const activeTopicProfile =
-            topicProfiles.imo;
+            topicProfiles[
+            topicProfileKey as keyof typeof topicProfiles
+            ] ||
+            `
+GENERAL MARITIME TOPIC
+
+Focus only on:
+- maritime operations
+- marine engineering
+- oral preparation
+- shipboard safety
+- maritime regulations
+`;
 
 
         /* =========================
@@ -367,23 +242,50 @@ belongs to the SAME MARITIME TOPIC
 as the CURRENT TOPIC MATERIALS.
 
 IMPORTANT:
-The question does NOT need exact wording
-inside the study materials.
+
+The user does NOT need to use
+exact wording from the study materials.
+
+The question may be:
+- conceptual
+- operational
+- oral-exam style
+- troubleshooting based
+- regulation related
+- abbreviation related
+- convention related
+- practical shipboard interpretation
+- safety related
+- survey related
+- machinery related
+- maritime foundational theory
 
 Allow:
-- conceptual maritime questions
-- related operational questions
-- related oral exam questions
-- related regulatory questions
-- related troubleshooting questions
-- foundational theory connected to the topic
+- follow-up questions
+- broader understanding questions
+- "what is this" questions
+- "why is this important" questions
+- regulation explanation questions
+- convention/source questions
+- onboard application questions
 
-Reject ONLY if:
-- completely unrelated
-- programming/coding
-- general non-maritime discussion
-- random unrelated engineering topics
-- unrelated ship systems
+Reject ONLY if the question is:
+- completely unrelated to maritime industry
+- pure coding/programming
+- celebrity/politics/entertainment
+- unrelated academic subjects
+- random non-maritime discussion
+
+IMPORTANT:
+
+If the USER QUESTION is logically connected
+to the maritime topic,
+return YES.
+
+Even if:
+- exact wording is absent
+- semantic wording differs
+- user asks foundational understanding
 
 Return ONLY:
 YES
@@ -392,6 +294,9 @@ NO
 
 CURRENT TOPIC PROFILE:
 ${activeTopicProfile}
+
+CURRENT STUDY MATERIALS:
+${knowledge}
 
 USER QUESTION:
 ${message}
@@ -444,44 +349,59 @@ ${message}
             });
         }
 
-        /* =========================
-           FINAL PROMPT
-        ========================= */
-
-        const prompt = `
-${navikCoreIdentity}
-
-${rolePrompt}
-
-IMPORTANT RULES:
-
-- Answer ONLY using the provided study materials
-- Do NOT invent technical facts
-- Do NOT hallucinate regulations
-- If information is unavailable in the supplied materials,
-clearly state that the required information is not available
-
-- Prioritize:
-  - operational understanding
-  - maritime realism
-  - safety awareness
-  - technical clarity
-  - exam relevance
-
-- Avoid generic chatbot language
-- Avoid unrelated discussion
-- Keep responses professionally structured
-
-STUDY MATERIALS:
-${knowledge}
-
-USER QUESTION:
-${message}
-`;
 
         console.log(
             "CALLING OPENAI"
         );
+
+        const recentMessages =
+            messages
+                .filter(
+                    (msg: any) =>
+                        typeof msg.content ===
+                        "string"
+                )
+                .slice(-12);
+
+        console.log(
+            "CONVERSATION MEMORY:",
+            recentMessages.length
+        );
+
+        const conversationHistory =
+            recentMessages.map((msg: any) => ({
+
+                role: msg.role,
+
+                content:
+                    typeof msg.content === "string"
+                        ? msg.content.slice(0, 3000)
+                        : "",
+            }));
+
+        /* =========================
+           CONVERSATION MEMORY
+        ========================= */
+
+        const conversationMemory =
+            buildConversationMemory({
+                messages:
+                    conversationHistory,
+            });
+
+        /* =========================
+           SYSTEM PROMPT
+        ========================= */
+
+        const prompt =
+            buildSystemPrompt({
+                message,
+                topicProfileKey,
+                knowledge,
+                conversationMemory,
+                navikIdentity:
+                    navikCoreIdentity,
+            });
 
         const completion =
             await openai.chat.completions.create({
@@ -490,20 +410,36 @@ ${message}
 
                 messages: [
                     {
-                        role: "user",
+                        role: "system",
                         content: prompt,
                     },
+
+                    ...conversationHistory,
                 ],
+                temperature: 0.3,
+
+                max_tokens: 900,
             });
 
         console.log(
             "OPENAI SUCCESS"
         );
 
-        const reply =
+        const rawReply =
             completion.choices[0]
                 ?.message
-                ?.content || "";
+                ?.content;
+
+        const cleanedReply =
+            typeof rawReply === "string"
+                ? rawReply.trim()
+                : "No valid response generated.";
+
+        const reply =
+            postProcessResponse({
+                response:
+                    cleanedReply,
+            });
 
         return Response.json({
             reply,
