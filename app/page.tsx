@@ -43,6 +43,8 @@ import {
   remove,
 } from "firebase/database";
 
+import { getToday } from "@/lib/getToday";
+
 /* =========================
     FUNCTIONS DATA
  ========================= */
@@ -134,6 +136,16 @@ export default function HomePage() {
 
           if (!currentUser) return;
 
+          const today = getToday();
+
+          await set(
+            ref(
+              rtdb,
+              `analytics/${today}/users/${currentUser.uid}`
+            ),
+            true
+          );
+
           const userStatusRef = ref(
             rtdb,
             `onlineUsers/${currentUser.uid}`
@@ -191,6 +203,62 @@ export default function HomePage() {
     };
 
     loadUsers();
+
+  }, []);
+
+  useEffect(() => {
+
+    const loadAnalytics = async () => {
+
+      const today = getToday();
+
+      const analyticsSnap = await get(
+        ref(rtdb, `analytics/${today}`)
+      );
+
+      console.log(
+        "ANALYTICS DATA",
+        analyticsSnap.val()
+      );
+
+      const analytics =
+        analyticsSnap.val() || {};
+
+      const usersCount =
+        analytics.users
+          ? Object.keys(analytics.users).length
+          : 0;
+
+      const topicsCount =
+        analytics.topics
+          ? Object.keys(analytics.topics).length
+          : 0;
+
+      const questionsCount =
+        analytics.questions
+          ? Object.keys(analytics.questions).length
+          : 0;
+
+      setStats([
+        {
+          type: "users",
+          value: String(usersCount),
+          text: "users online",
+        },
+        {
+          type: "topics",
+          value: String(topicsCount),
+          text: "topics viewed",
+        },
+        {
+          type: "questions",
+          value: String(questionsCount),
+          text: "questions viewed",
+        },
+      ]);
+    };
+
+    loadAnalytics();
 
   }, []);
 

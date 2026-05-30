@@ -42,7 +42,13 @@ import {
 import {
   auth,
   db,
+  rtdb,
 } from "@/lib/firebase";
+
+import {
+  ref,
+  set,
+} from "firebase/database";
 
 import LoadingScreen from "@/components/LoadingScreen";
 
@@ -225,7 +231,9 @@ export default function TopicsPage() {
 
   useEffect(() => {
 
+
     const checkTrial = async () => {
+      const user = auth.currentUser;
 
 
       try {
@@ -234,6 +242,49 @@ export default function TopicsPage() {
         if (!user) {
           router.push("/");
           return;
+        }
+
+        /* DAILY ACTIVE USER TRACKING */
+
+        const today =
+          new Date()
+            .toISOString()
+            .split("T")[0];
+
+        const dailyRef = doc(
+          db,
+          "dailyUsers",
+          today
+        );
+
+        const dailySnap =
+          await getDoc(dailyRef);
+
+        if (!dailySnap.exists()) {
+
+          await setDoc(dailyRef, {
+            count: 1,
+            users: [user.uid],
+          });
+
+        } else {
+
+          const data =
+            dailySnap.data();
+
+          const users =
+            data?.users || [];
+
+          if (!users.includes(user.uid)) {
+
+            await updateDoc(
+              dailyRef,
+              {
+                count: increment(1),
+                users: arrayUnion(user.uid),
+              }
+            );
+          }
         }
 
         const userRef = doc(
@@ -504,7 +555,7 @@ export default function TopicsPage() {
         newClicks === 50
       );
 
-    // FIRESTORE IN BACKGROUND
+    // USER CLICKS
 
     updateDoc(
       doc(db, "users", user.uid),
@@ -512,6 +563,21 @@ export default function TopicsPage() {
         topicClicks: increment(1),
       }
     ).catch(console.error);
+
+    // DAILY ANALYTICS
+
+    const today =
+      new Date()
+        .toISOString()
+        .split("T")[0];
+
+           set(
+          ref(
+            rtdb,
+            `analytics/${today}/topics/${topicId}`
+          ),
+          true
+        ).catch(console.error);
 
     // SHOW POPUP
 

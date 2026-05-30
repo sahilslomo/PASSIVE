@@ -14,6 +14,7 @@ import {
   query,
   where,
   getDoc,
+  setDoc,
 } from "firebase/firestore";
 
 import {
@@ -31,6 +32,13 @@ import {
 
 import { db, auth, } from "@/lib/firebase";
 import LoadingScreen from "@/components/LoadingScreen";
+
+import { rtdb } from "@/lib/firebase";
+
+import {
+  ref,
+  set,
+} from "firebase/database";
 
 type Label = {
   type: "city" | "tag";
@@ -442,6 +450,8 @@ export default function QuestionsPage() {
     id: string
   ) => {
 
+    console.log("QUESTION OPENED");
+
     const isAlreadyOpen =
       openAnswers.includes(id);
 
@@ -456,18 +466,48 @@ export default function QuestionsPage() {
     /* COUNT ONLY WHEN OPENING */
 
     if (!isAlreadyOpen) {
+
       try {
 
-        await updateDoc(
-          doc(db, "analytics", "live"),
+        console.log("UPDATING QUESTION COUNT");
+
+        const today =
+          new Date()
+            .toISOString()
+            .split("T")[0];
+
+        await set(
+          ref(
+            rtdb,
+            `analytics/${today}/questions/${id}`
+          ),
+          true
+        );
+
+        await setDoc(
+          doc(db, "analytics", "today"),
+
           {
-            questionsViewedHour:
-              increment(1),
-          }
+            questionsViewed: increment(1),
+          },
+          { merge: true }
+        );
+
+        await setDoc(
+          doc(db, "analytics", today),
+          {
+            questionsViewed: increment(1),
+          },
+          { merge: true }
         );
 
       } catch (error) {
-        console.error(error);
+
+        console.error(
+          "QUESTION ANALYTICS ERROR:",
+          error
+        );
+
       }
     }
   };
@@ -943,7 +983,7 @@ break-normal
 
         </div>
       )}
-      
+
       {/* ================= FILTER ================= */}
 
       {showFilter && (
