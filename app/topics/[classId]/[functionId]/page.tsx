@@ -52,6 +52,8 @@ import {
 
 import LoadingScreen from "@/components/LoadingScreen";
 
+import BottomNav from "@/components/BottomNav";
+
 /* =========================
    FUNCTION TITLES
 ========================= */
@@ -571,13 +573,13 @@ export default function TopicsPage() {
         .toISOString()
         .split("T")[0];
 
-           set(
-          ref(
-            rtdb,
-            `analytics/${today}/topics/${topicId}`
-          ),
-          true
-        ).catch(console.error);
+    set(
+      ref(
+        rtdb,
+        `analytics/${today}/topics/${topicId}`
+      ),
+      true
+    ).catch(console.error);
 
     // SHOW POPUP
 
@@ -607,13 +609,13 @@ export default function TopicsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f5f5] text-black pb-28">
+    <main className="min-h-screen bg-[#f5f5f5] text-black pb-24 md:pb-10">
 
-      <div className="max-w-md mx-auto px-5 pt-5">
+      <div className="max-w-md md:max-w-4xl lg:max-w-6xl mx-auto px-5 md:px-10 pt-5">
 
         {/* HEADER */}
 
-        <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm mb-8">
+        <div className="bg-white border border-gray-200 rounded-3xl p-5 md:p-7 shadow-sm mb-8">
 
           {/* TOP */}
 
@@ -644,16 +646,16 @@ export default function TopicsPage() {
 
           <div className="mb-4">
 
-            <p className="text-gray-500 text-sm mb-1">
-              Welcome back 👋
-            </p>
-
             <h1 className="text-2xl font-bold tracking-tight">
               Hi,{" "}
               {user?.email?.split(
                 "@"
               )[0] || "Navigator"}
             </h1>
+
+            <p className="text-gray-500 text-sm mb-1">
+              Welcome back 👋
+            </p>
 
           </div>
 
@@ -694,7 +696,7 @@ export default function TopicsPage() {
 
         {/* SEARCH */}
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-3 flex items-center gap-2 mb-5">
+        <div className="bg-white border border-gray-200 rounded-2xl p-3 md:p-4 flex items-center gap-2 mb-5">
 
           <Search
             size={18}
@@ -730,7 +732,7 @@ export default function TopicsPage() {
 
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 md:grid md:grid-cols-2 md:gap-5 md:space-y-0 lg:grid-cols-3">
 
             {filteredTopics.map(
               (topic: any) => (
@@ -770,6 +772,7 @@ active:translate-y-[2px]
 
 touch-manipulation
 select-none
+md:p-6
 "
                 >
 
@@ -829,148 +832,10 @@ select-none
 
       </div>
 
-      {/* BOTTOM NAV */}
+      <BottomNav />
 
-      <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-sm backdrop-blur-lg z-50">
+      {/* SUBSCRIPTION MODAL */}
 
-        <div className="max-w-md mx-auto flex items-center justify-around py-3">
-
-          {/* HOME */}
-
-          <button
-            onClick={() =>
-              router.push("/")
-            }
-            className="flex flex-col items-center text-gray-500 active:scale-95 transition-all duration-150"
-          >
-
-            <Home size={24} />
-
-            <span className="text-xs mt-1">
-              Home
-            </span>
-
-          </button>
-
-          {/* FILTER LOCKED */}
-
-          <button
-            onClick={() =>
-              alert(
-                "Filter available inside Questions Page"
-              )
-            }
-            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
-          >
-
-            <div className="relative">
-
-              <Filter size={24} />
-
-              <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
-
-                <Lock size={8} />
-
-              </div>
-
-            </div>
-
-            <span className="text-xs mt-1">
-              Filter
-            </span>
-
-          </button>
-
-          {/* BOOKMARK LOCKED */}
-
-          <button
-            onClick={() =>
-              alert(
-                "Bookmarks available inside Questions Page"
-              )
-            }
-            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
-          >
-
-            <div className="relative">
-
-              <Bookmark size={24} />
-
-              <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
-
-                <Lock size={8} />
-
-              </div>
-
-            </div>
-
-            <span className="text-xs mt-1">
-              Bookmarks
-            </span>
-
-          </button>
-
-          {/* REVISION */}
-
-          <button
-            onClick={() =>
-              alert(
-                "Revision available inside Questions Page"
-              )
-            }
-            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
-          >
-
-            <div className="relative">
-
-              <BookOpen size={22} />
-
-              <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
-
-                <Lock size={8} />
-
-              </div>
-
-            </div>
-
-            <span className="text-xs mt-1">
-              Revision
-            </span>
-
-          </button>
-
-          {/* AI CHAT */}
-
-          <button
-            onClick={() =>
-              alert(
-                "Revision available inside Questions Page"
-              )
-            }
-            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
-          >
-
-            <div className="relative">
-
-              <Bot size={22} />
-
-              <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
-
-                <Lock size={8} />
-
-              </div>
-
-            </div>
-
-            <span className="text-xs mt-1">
-              Navik Bro
-            </span>
-
-          </button>
-
-        </div>
-
-      </nav>
       {showSubscriptionModal && (
 
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center px-5">

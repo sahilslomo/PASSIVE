@@ -401,15 +401,46 @@ export default function HomePage() {
 
   return (
     <>
-      <main className="min-h-screen bg-[#f5f5f5] text-black pb-[120px]">
+      <main
+        className="
+    min-h-screen
+    bg-[#f5f5f5]
+    text-black
+    pb-[120px]
+    md:px-6
+    lg:px-10
+  "
+      >
 
-        <div className="max-w-md mx-auto px-5 pt-5">
+        <div
+          className="
+    w-full
+    max-w-md
+    md:max-w-4xl
+    lg:max-w-6xl
+    xl:max-w-7xl
+    mx-auto
+    px-5
+    pt-5
+  "
+        >
 
           {/* =========================
               HEADER
           ========================= */}
 
-          <div className="bg-white border border-gray-200 rounded-3xl p-4 mb-5 shadow-sm">
+          <div
+            className="
+    bg-white
+    border
+    border-gray-200
+    rounded-3xl
+    p-4
+    md:p-6
+    mb-5
+    shadow-sm
+  "
+          >
 
             <div className="flex items-center justify-between">
 
@@ -520,6 +551,8 @@ export default function HomePage() {
 
           </div>
 
+         
+
           {/* =========================
               FUNCTIONS
           ========================= */}
@@ -530,7 +563,15 @@ export default function HomePage() {
               BROWSE BY FUNCTION
             </h2>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div
+              className="
+    grid
+    grid-cols-2
+    md:grid-cols-2
+    lg:grid-cols-4
+    gap-4
+  "
+            >
 
               {functions.map(
                 (item, index) => (
@@ -602,109 +643,130 @@ active:translate-y-[2px]
 
           </div>
 
-          {/* =========================
+          <div>
+
+            {/* =========================
               LIVE STATS
           ========================= */}
 
-          <div className="mt-8 overflow-hidden">
+            <div className="mt-8 overflow-hidden md:mt-10">
 
-            <div className="relative h-[92px] overflow-hidden">
+              <div className="relative h-[92px] md:h-[110px] overflow-hidden">
 
-              {stats.map(
-                (item, index) => (
-                  <div
-                    key={index}
-                    className={`absolute inset-0 transition-all duration-500 ease-out ${activeStat === index
-                      ? "opacity-100 translate-y-0 blur-0 scale-100 z-10"
-                      : "opacity-0 translate-y-2 blur-sm scale-[0.98] pointer-events-none z-0"
-                      }`}
-                  >
+                {stats.map(
+                  (item, index) => (
+                    <div
+                      key={index}
+                      className={`absolute inset-0 transition-all duration-500 ease-out ${activeStat === index
+                        ? "opacity-100 translate-y-0 blur-0 scale-100 z-10"
+                        : "opacity-0 translate-y-2 blur-sm scale-[0.98] pointer-events-none z-0"
+                        }`}
+                    >
 
-                    <div className="bg-white border border-gray-200 rounded-3xl px-5 py-4 flex items-center justify-between shadow-sm">
+                      <div
+                        className="
+    bg-white
+    border
+    border-gray-200
+    rounded-3xl
+    px-5
+    py-4
+    md:px-8
+    md:py-6
+    flex
+    items-center
+    justify-between
+    shadow-sm
+  "
+                      >
 
-                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4">
 
-                        <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-black">
+                          <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-black">
 
-                          {item.type === "users" && (
-                            <Users
-                              size={22}
-                              strokeWidth={2.2}
-                            />
-                          )}
-
-                          {item.type === "topics" && (
-                            <BookOpen
-                              size={22}
-                              strokeWidth={2.2}
-                            />
-                          )}
-
-                          {item.type === "questions" && (
-                            <MessageCircleMore
-                              size={22}
-                              strokeWidth={2.2}
-                            />
-                          )}
-                        </div>
-
-                        <div className="h-[44px] flex flex-col justify-center">
-
-                          <p className="text-[22px] font-bold text-black leading-none">
-                            {item.value}
-                          </p>
-
-                          <div className="flex items-center gap-2 mt-1">
-
-                            {activeStat === 0 && (
-                              <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.9)] animate-pulse" />
+                            {item.type === "users" && (
+                              <Users
+                                size={22}
+                                strokeWidth={2.2}
+                              />
                             )}
 
-                            <p className="text-sm text-gray-600">
-                              {item.text}
+                            {item.type === "topics" && (
+                              <BookOpen
+                                size={22}
+                                strokeWidth={2.2}
+                              />
+                            )}
+
+                            {item.type === "questions" && (
+                              <MessageCircleMore
+                                size={22}
+                                strokeWidth={2.2}
+                              />
+                            )}
+                          </div>
+
+                          <div className="h-[44px] flex flex-col justify-center">
+
+                            <p className="text-[22px] font-bold text-black leading-none">
+                              {item.value}
                             </p>
+
+                            <div className="flex items-center gap-2 mt-1">
+
+                              {activeStat === 0 && (
+                                <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.9)] animate-pulse" />
+                              )}
+
+                              <p className="text-sm text-gray-600">
+                                {item.text}
+                              </p>
+
+                            </div>
 
                           </div>
 
                         </div>
 
-                      </div>
+                        <div className="flex gap-1.5">
 
-                      <div className="flex gap-1.5">
+                          {stats.map(
+                            (
+                              _,
+                              dotIndex
+                            ) => (
+                              <div
+                                key={
+                                  dotIndex
+                                }
+                                className={`w-2 h-2 rounded-full transition-all ${activeStat ===
+                                  dotIndex
+                                  ? "bg-black"
+                                  : "bg-gray-300"
+                                  }`}
+                              />
+                            )
+                          )}
 
-                        {stats.map(
-                          (
-                            _,
-                            dotIndex
-                          ) => (
-                            <div
-                              key={
-                                dotIndex
-                              }
-                              className={`w-2 h-2 rounded-full transition-all ${activeStat ===
-                                dotIndex
-                                ? "bg-black"
-                                : "bg-gray-300"
-                                }`}
-                            />
-                          )
-                        )}
+                        </div>
 
                       </div>
 
                     </div>
+                  )
+                )}
 
-                  </div>
-                )
-              )}
+              </div>
 
             </div>
 
+
+
           </div>
 
-
-
         </div>
+
+      
 
 
         {/* =========================
@@ -713,7 +775,20 @@ active:translate-y-[2px]
 
         <nav className="fixed bottom-0 left-0 z-50 w-full bg-white border-t border-gray-200 shadow-sm backdrop-blur-lg">
 
-          <div className="max-w-md mx-auto flex items-center justify-around py-3">
+          <div
+            className="
+    w-full
+    max-w-md
+    md:max-w-4xl
+    lg:max-w-6xl
+    xl:max-w-7xl
+    mx-auto
+    flex
+    items-center
+    justify-around
+    py-3
+  "
+          >
 
             {/* HOME */}
 
@@ -781,64 +856,6 @@ active:translate-y-[2px]
 
               <span className="text-xs mt-1">
                 Bookmarks
-              </span>
-
-            </button>
-
-            {/* REVISION */}
-
-            <button
-              onClick={() =>
-                alert(
-                  "Revision available inside Questions Page"
-                )
-              }
-              className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
-            >
-
-              <div className="relative">
-
-                <BookOpen size={22} />
-
-                <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
-
-                  <Lock size={8} />
-
-                </div>
-
-              </div>
-
-              <span className="text-xs mt-1">
-                Revision
-              </span>
-
-            </button>
-
-            {/* AI CHAT */}
-
-            <button
-              onClick={() =>
-                alert(
-                  "Revision available inside Questions Page"
-                )
-              }
-              className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
-            >
-
-              <div className="relative">
-
-                <Bot size={22} />
-
-                <div className="absolute -top-1 -right-2 bg-black text-white rounded-full p-[3px] shadow-sm">
-
-                  <Lock size={8} />
-
-                </div>
-
-              </div>
-
-              <span className="text-xs mt-1">
-                Navik Bro
               </span>
 
             </button>

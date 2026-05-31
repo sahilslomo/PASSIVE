@@ -604,13 +604,13 @@ export default function QuestionsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f5f5] text-black pb-28 select-none">
+    <main className="min-h-screen bg-[#f5f5f5] text-black pb-28 select-none md:pb-10">
 
-      <div className="max-w-md mx-auto px-5 pt-5">
+      <div className="max-w-md md:max-w-4xl lg:max-w-6xl mx-auto px-5 pt-5">
 
         {/* ================= HEADER ================= */}
 
-        <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm mb-4">
+        <div className="bg-white border border-gray-200 rounded-3xl p-5 md:p-7 shadow-sm mb-4">
 
           {/* TOP */}
 
@@ -675,6 +675,7 @@ export default function QuestionsPage() {
             </p>
 
             <div className="mt-5 border-l-4 border-cyan-500 pl-4">
+
               <p className="text-base md:text-lg font-medium italic text-gray-700 leading-7">
                 “Keep Showing Up Daily —
                 <span className="text-cyan-600 font-semibold">
@@ -688,9 +689,32 @@ export default function QuestionsPage() {
 
         </div>
 
+        {/* ACTION BAR */}
+        <div className="mt-5 mb-4 flex flex-col md:flex-row gap-3 md:gap-4">
+
+          {/* REVISION */}
+          <button
+            onClick={() => router.push(`/revision/${topicId}`)}
+            className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-black py-3 rounded-2xl text-sm font-medium active:scale-95 transition md:text-base md:py-3.5"
+          >
+            <BookOpen size={16} />
+            Revision
+          </button>
+
+          {/* NAVIK BRO */}
+          <button
+            onClick={() => router.push(`/chat/${topicId}`)}
+            className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-black py-3 rounded-2xl text-sm font-medium active:scale-95 transition md:text-base md:py-3.5"
+          >
+            <Bot size={16} />
+            Navik Bro
+          </button>
+
+        </div>
+
         {/* ================= SEARCH ================= */}
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-3 flex items-center gap-2 mb-4">
+        <div className="bg-white border border-gray-200 rounded-2xl p-3 md:p-4 flex items-center gap-2 mb-4 md:mb-6">
 
           <Search
             size={18}
@@ -712,7 +736,7 @@ export default function QuestionsPage() {
 
         {/* ================= QUESTIONS ================= */}
 
-        <div className="space-y-4">
+        <div className="space-y-4 md:space-y-5">
 
           {filteredQuestions.map(
             (q, i) => {
@@ -731,7 +755,7 @@ export default function QuestionsPage() {
               return (
                 <div
                   key={id}
-                  className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm"
+                  className="bg-white border border-gray-200 rounded-3xl p-5 md:p-6 shadow-sm"
                 >
 
                   <div className="flex justify-between gap-3 min-w-0">
@@ -764,7 +788,7 @@ export default function QuestionsPage() {
                           {i + 1}
                         </p>
 
-                        <p className="text-gray-700 mt-1 leading-6">
+                        <p className="text-gray-700 mt-1 leading-6 md:leading-7 md:text-base">
                           {q.question ||
                             q.q}
                         </p>
@@ -825,7 +849,8 @@ export default function QuestionsPage() {
                   {/* ANSWER */}
 
                   {isOpen && (
-                    <div className="mt-4 bg-gray-50 border border-gray-200 p-4 rounded-2xl">
+                    <div className="
+mt-4 bg-gray-50 border border-gray-200 p-4 md:p-5 rounded-2xl">
 
                       <p className="font-semibold mb-3">
                         Answer:
@@ -947,7 +972,7 @@ break-normal
 
                 <div
                   className="
-            h-[720px]
+          h-[520px] md:h-[650px]
             overflow-y-auto
             p-4
             leading-7
@@ -985,190 +1010,96 @@ break-normal
       )}
 
       {/* ================= FILTER ================= */}
-
       {showFilter && (
-        <div className="fixed inset-0 bg-black/40 flex items-end z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
 
-          <div className="bg-white w-full max-w-md mx-auto p-5 rounded-t-3xl">
+          <div className="bg-white w-full max-w-md mx-auto p-5 rounded-3xl shadow-xl">
 
             <div className="flex justify-between items-center mb-4">
+              <h2 className="font-bold text-lg">Filter Labels</h2>
 
-              <h2 className="font-bold text-lg">
-                Filter Labels
-              </h2>
-
-              <button
-                onClick={() =>
-                  setShowFilter(false)
-                }
-              >
+              <button onClick={() => setShowFilter(false)}>
                 ✕
               </button>
-
             </div>
 
             <div className="flex flex-wrap gap-2 mb-5">
-
-              {labelOptions.map(
-                (l) => (
-                  <button
-                    key={l}
-                    onClick={() =>
-                      toggleLabel(
-                        l
-                      )
-                    }
-                    className={`px-3 py-2 text-xs rounded-xl border ${selectedLabels.includes(
-                      l
-                    )
+              {labelOptions.map((l) => (
+                <button
+                  key={l}
+                  onClick={() => toggleLabel(l)}
+                  className={`px-3 py-2 text-xs rounded-xl border ${selectedLabels.includes(l)
                       ? "bg-black text-white border-black"
                       : "bg-white text-black border-gray-200"
-                      }`}
-                  >
-                    {l}
-                  </button>
-                )
-              )}
-
+                    }`}
+                >
+                  {l}
+                </button>
+              ))}
             </div>
 
             <button
-              onClick={() =>
-                setShowFilter(false)
-              }
+              onClick={() => setShowFilter(false)}
               className="w-full bg-black text-white p-3 rounded-2xl"
             >
               Done
             </button>
 
           </div>
-
         </div>
       )}
 
       {/* ================= BOTTOM NAV ================= */}
 
-      <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-sm z-40">
+      <nav className="fixed bottom-0 left-0 z-50 w-full bg-white border-t border-gray-200 shadow-sm backdrop-blur-lg">
+        <div className="
+        w-full 
+        max-w-md 
+        md:max-w-4xl 
+        lg:max-w-6xl 
+        xl:max-w-7xl 
+        mx-auto 
+        flex 
+        items-center 
+        justify-around 
+        py-3 
+        px-2
+        md:px-6
+        lg:px-10
+      ">
 
-        <div className="max-w-md mx-auto flex items-center justify-around py-3">
 
           {/* HOME */}
-
           <button
-            onClick={() =>
-              router.push("/")
-            }
-            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
+            onClick={() => router.push("/")}
+            className="flex flex-col items-center text-black font-semibold active:scale-95 transition-all duration-150"
           >
-
-            <div className="relative">
-
-              <Home size={20} />
-
-            </div>
-
-            <span className="text-xs mt-1">
-              Home
-            </span>
-
+            <Home size={22} />
+            <span className="text-xs mt-1">Home</span>
           </button>
 
           {/* FILTER */}
 
           <button
-            onClick={() =>
-              setShowFilter(true)
-            }
-            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
+            onClick={() => setShowFilter(true)}
+            className="flex flex-col items-center text-gray-400 hover:text-black active:scale-95 transition-all duration-150"
           >
+            <Filter size={22} />
 
-            <div className="relative">
-
-              <Filter size={20} />
-
-            </div>
-
-            <span className="text-xs mt-1">
-              Filter
-            </span>
-
+            <span className="text-xs mt-1">Filter</span>
           </button>
-
 
           {/* BOOKMARK */}
 
           <button
-            onClick={
-              toggleBookmarksView
-            }
-            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
+            onClick={toggleBookmarksView}
+            className="flex flex-col items-center text-gray-400 hover:text-black active:scale-95 transition-all duration-150"
           >
-            <div className="relative">
-
-              <Bookmark size={20} />
-
-            </div>
+            <Bookmark size={22} />
 
             <span className="text-xs mt-1">
-              {showBookmarksOnly
-                ? "All"
-                : "Bookmarks"}
+              {showBookmarksOnly ? "All" : "Bookmarks"}
             </span>
-
-          </button>
-
-          {/* REVISION */}
-
-          {/* REVISION */}
-
-          <button
-            onClick={() => {
-
-              setPageLoading(true);
-
-              router.push(
-                `/revision/${topicId}`
-              );
-            }
-            }
-            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
-          >
-
-            <div className="relative">
-
-              <BookOpen size={20} />
-
-            </div>
-
-            <span className="text-xs mt-1">
-              Revision
-            </span>
-
-          </button>
-
-          {/* AI CHAT */}
-
-          <button
-            onClick={() => {
-
-              setPageLoading(true);
-
-              router.push(
-                `/chat/${topicId}`
-              );
-            }}
-            className="flex flex-col items-center text-gray-400 relative active:scale-95 transition-all duration-150"
-          >
-            <div className="relative">
-
-              <Bot size={20} />
-
-            </div>
-
-            <span className="text-xs mt-1">
-              Navik Bro
-            </span>
-
           </button>
 
 
