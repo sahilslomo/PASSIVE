@@ -6,12 +6,15 @@ import {
   addDoc,
   collection,
   getDocs,
+  getDoc,
   deleteDoc,
   doc,
   updateDoc,
   query,
   where,
 } from "firebase/firestore";
+
+
 
 import { db, auth } from "@/lib/firebase";
 import * as XLSX from "xlsx";
@@ -181,35 +184,24 @@ export default function AdminPage() {
     setTranscripts(data);
   };
 
+  const [authReady, setAuthReady] = useState(false);
+
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("AUTH USER:", user);
 
-    signOut(auth);
+      setAuthReady(true);   // ✅ THIS is what you were told to add
+      setLoading(false);    // ✅ important fix so loading stops
 
-    fetchTopics();
-    fetchQuestions();
-
-    const unsubscribe =
-      onAuthStateChanged(auth, (user) => {
-
-        if (
-          user &&
-          user.email === "sahilslomo@gmail.com"
-        ) {
-
-          setIsAuthenticated(true);
-
-        } else {
-
-          setIsAuthenticated(false);
-
-        }
-
-        setLoading(false);
-
-      });
+      if (user) {
+        fetchTopics();
+        fetchQuestions();
+      } else {
+        setIsAuthenticated(false);
+      }
+    });
 
     return () => unsubscribe();
-
   }, []);
 
   const handleLogin = async () => {
@@ -222,18 +214,6 @@ export default function AdminPage() {
           email,
           password
         );
-
-      if (
-        result.user.email !==
-        "sahilslomo@gmail.com"
-      ) {
-
-        alert("Not authorized");
-
-        await signOut(auth);
-
-        return;
-      }
 
       setIsAuthenticated(true);
 
@@ -512,10 +492,6 @@ export default function AdminPage() {
         "Topics + Questions Uploaded!"
       );
 
-      fetchTopics();
-
-      fetchQuestions();
-
     } catch (error) {
 
       console.error(error);
@@ -665,7 +641,7 @@ export default function AdminPage() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (authReady && !isAuthenticated) {
 
     return (
 
