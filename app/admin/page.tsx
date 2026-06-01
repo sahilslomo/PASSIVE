@@ -189,11 +189,13 @@ export default function AdminPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       console.log("AUTH USER:", user);
+      console.log("UID:", user?.uid);   // ✅ ADD THIS LINE HERE
 
       setAuthReady(true);   // ✅ THIS is what you were told to add
       setLoading(false);    // ✅ important fix so loading stops
 
       if (user) {
+        setIsAuthenticated(true);
         fetchTopics();
         fetchQuestions();
       } else {
@@ -326,12 +328,32 @@ export default function AdminPage() {
     }
 
     try {
-      await addDoc(collection(db, "transcripts"), {
-        topicId: selectedTopic,
-        name: transcriptName,
-        text: transcriptText,
-        createdAt: Date.now(),
-      });
+      const selectedTopicData =
+        topics.find(
+          (t) => t.id === selectedTopic
+        );
+
+      await addDoc(
+        collection(db, "transcripts"),
+        {
+          topicId: selectedTopic,
+
+          topicTitle:
+            selectedTopicData?.title || "",
+
+          classId:
+            selectedTopicData?.classId || "",
+
+          functionId:
+            selectedTopicData?.functionId || "",
+
+          name: transcriptName,
+
+          text: transcriptText,
+
+          createdAt: Date.now(),
+        }
+      );
 
       setTranscriptName("");
       setTranscriptText("");
@@ -840,6 +862,40 @@ export default function AdminPage() {
             className="w-full bg-black text-white p-3 rounded-xl"
           >
             Add Transcript
+          </button>
+
+          <button
+            onClick={() => {
+              if (!selectedTopic) {
+                alert("Select a topic first");
+                return;
+              }
+
+              window.open(
+                `/revision/${selectedTopic}`,
+                "_blank"
+              );
+            }}
+            className="w-full bg-cyan-600 text-white p-3 rounded-xl mt-3"
+          >
+            ✨ Open Revision Page
+          </button>
+
+          <button
+            onClick={() => {
+              if (!selectedTopic) {
+                alert("Select a topic first");
+                return;
+              }
+
+              window.open(
+                `/chat/${selectedTopic}`,
+                "_blank"
+              );
+            }}
+            className="w-full bg-black text-white p-3 rounded-xl mt-3"
+          >
+            🤖 Open Navik Bro
           </button>
 
         </div>

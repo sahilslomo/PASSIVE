@@ -689,29 +689,6 @@ export default function QuestionsPage() {
 
         </div>
 
-        {/* ACTION BAR */}
-        <div className="mt-5 mb-4 flex flex-col md:flex-row gap-3 md:gap-4">
-
-          {/* REVISION */}
-          <button
-            onClick={() => router.push(`/revision/${topicId}`)}
-            className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-black py-3 rounded-2xl text-sm font-medium active:scale-95 transition md:text-base md:py-3.5"
-          >
-            <BookOpen size={16} />
-            Revision
-          </button>
-
-          {/* NAVIK BRO */}
-          <button
-            onClick={() => router.push(`/chat/${topicId}`)}
-            className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-200 text-black py-3 rounded-2xl text-sm font-medium active:scale-95 transition md:text-base md:py-3.5"
-          >
-            <Bot size={16} />
-            Navik Bro
-          </button>
-
-        </div>
-
         {/* ================= SEARCH ================= */}
 
         <div className="bg-white border border-gray-200 rounded-2xl p-3 md:p-4 flex items-center gap-2 mb-4 md:mb-6">
