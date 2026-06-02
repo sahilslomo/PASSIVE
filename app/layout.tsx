@@ -30,7 +30,7 @@ export const metadata:
   title: "NAVIK",
 
   description:
-    "NAVIK Maritime Learning Platform",
+    "Sail Towards Competency",
 };
 
 export default function RootLayout({
