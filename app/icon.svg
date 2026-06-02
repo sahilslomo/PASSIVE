@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Background -->
   <rect x="12" y="12" width="488" height="488" rx="72" fill="#ffffff"/>
 
   <g
+    transform="rotate(30 256 256)"
     fill="none"
     stroke="#000000"
     stroke-width="22"
@@ -18,10 +18,10 @@
     <!-- Right Sail -->
     <path d="M256 130L362 250H256"/>
 
-    <!-- Deck -->
-    <path d="M150 320H362"/>
+   <!-- Deck -->
+<path d="M150 320L362 305"/>
 
-    <!-- Flatter Hull -->
-    <path d="M140 320C145 345 170 360 200 360H312C342 360 367 345 372 320"/>
+<!-- Hull -->
+<path d="M140 320C150 345 175 360 205 360H305C335 360 360 340 372 305"/>
   </g>
 </svg>
