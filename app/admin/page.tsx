@@ -1032,9 +1032,19 @@ export default function AdminPage() {
             Topics
           </h2>
 
+          {!selectedTopic && (
+            <div className="bg-yellow-50 border rounded-xl p-4 mb-4">
+              Select a topic above to view questions.
+            </div>
+          )}
+
           <div className="space-y-4">
 
             {[...topics]
+              .filter(
+                (t: any) =>
+                  t.id === selectedTopic
+              )
               .sort((a: any, b: any) =>
                 a.title.localeCompare(b.title)
               )

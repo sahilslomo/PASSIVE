@@ -110,7 +110,7 @@ export default function HomePage() {
     {
       type: "users",
       value: "0",
-      text: "Users Online Today",
+      text: "users online Today",
     },
     {
       type: "topics",
@@ -194,7 +194,7 @@ export default function HomePage() {
         {
           type: "users",
           value: String(totalUsers),
-          text: "users online",
+          text: "users online Today",
         },
 
         prev[1],
@@ -245,17 +245,17 @@ export default function HomePage() {
         {
           type: "users",
           value: String(usersCount),
-          text: "users online",
+          text: "users online Today",
         },
         {
           type: "topics",
           value: String(topicsCount),
-          text: "topics viewed",
+          text: "topics viewed Today",
         },
         {
           type: "questions",
           value: String(questionsCount),
-          text: "questions viewed",
+          text: "questions viewed Today",
         },
       ]);
     };
@@ -467,7 +467,7 @@ export default function HomePage() {
                   </h1>
 
                   <p className="text-sm text-gray-500">
-                    Sail towards CoC
+                    Sail towards COC
                   </p>
 
                 </div>
@@ -599,6 +599,11 @@ rounded-2xl
 border
 border-gray-200
 p-4
+md:p-6
+lg:p-4
+min-h-[180px]
+md:min-h-[220px]
+lg:min-h-[180px]
 shadow-sm
 text-left
 transition-all
@@ -624,6 +629,7 @@ active:translate-y-[2px]
 
                       <Folder
                         size={32}
+                        className="md:w-10 md:h-10 lg:w-8 lg:h-8"
                         strokeWidth={1.8}
                       />
 

@@ -646,7 +646,7 @@ export default function TopicsPage() {
 
           <div className="mb-4">
 
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="text-2xl mb-2 font-bold tracking-tight ">
               Hi,{" "}
               {user?.email?.split(
                 "@"
@@ -657,6 +657,16 @@ export default function TopicsPage() {
               Welcome back 👋
             </p>
 
+          </div>
+
+          <div className="mt-5 mb-6 border-l-4 border-cyan-500 pl-4">
+            <p className="text-base md:text-lg font-medium italic text-gray-700 leading-7">
+              “Don’t think from where to Begin.
+              Just Start —
+              <span className="text-cyan-600 font-semibold">
+                {" "}Success Follows Consistency.”
+              </span>
+            </p>
           </div>
 
           {/* BADGES */}
@@ -680,16 +690,6 @@ export default function TopicsPage() {
             <h2 className="text-xl font-bold leading-tight">
               {functionTitle}
             </h2>
-
-            <div className="mt-5 border-l-4 border-cyan-500 pl-4">
-              <p className="text-base md:text-lg font-medium italic text-gray-700 leading-7">
-                “Don’t think from where to Begin.
-                Just Start —
-                <span className="text-cyan-600 font-semibold">
-                  {" "}Success Follows Consistency.”
-                </span>
-              </p>
-            </div>
           </div>
 
         </div>

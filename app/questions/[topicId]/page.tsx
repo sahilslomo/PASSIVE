@@ -705,7 +705,7 @@ export default function QuestionsPage() {
                 e.target.value
               )
             }
-            placeholder="Search questions or answers..."
+            placeholder="Search Q&A or Surveyors..."
             className="w-full outline-none bg-transparent"
           />
 
