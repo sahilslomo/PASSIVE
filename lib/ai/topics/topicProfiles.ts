@@ -37,5 +37,4 @@ CORE CONCEPTS:
 - shipping law
 - safety management systems
 `,
-
 };

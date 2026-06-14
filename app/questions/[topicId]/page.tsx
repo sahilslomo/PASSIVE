@@ -78,6 +78,7 @@ export default function QuestionsPage() {
     console.log("📦 TRANSCRIPTS UPDATED:", transcripts);
   }, [transcripts]);   // ✅ ADD HERE
 
+
   const [loadingRevision, setLoadingRevision] = useState(false);
 
   const [loading, setLoading] =
@@ -113,12 +114,38 @@ export default function QuestionsPage() {
   const [showFilter, setShowFilter] =
     useState(false);
 
-  const labelOptions = [
+  useEffect(() => {
+    if (showFilter) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showFilter]);
+
+  const allLabels = Array.from(
+    new Set(
+      questions.flatMap((q) =>
+        (q.labels || []).map((l) => l.value)
+      )
+    )
+  ).sort();
+
+  const mmdLabels = [
     "MUMBAI",
     "CHENNAI",
     "KOCHI",
+    "NOIDA",
     "KOLKATA",
   ];
+
+  const surveyorLabels = allLabels.filter(
+    (label) =>
+      !mmdLabels.includes(label.toUpperCase())
+  );
 
   const [displayedRevision, setDisplayedRevision] =
     useState("");
@@ -711,6 +738,47 @@ export default function QuestionsPage() {
 
         </div>
 
+        {/* ACTIVE FILTERS */}
+
+        {selectedLabels.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+
+            {selectedLabels.map((label) => (
+              <button
+                key={label}
+                onClick={() =>
+                  setSelectedLabels((prev) =>
+                    prev.filter((x) => x !== label)
+                  )
+                }
+                className="
+          flex items-center gap-2
+          bg-black text-white
+          px-3 py-2
+          rounded-full
+          text-sm
+        "
+              >
+                {label}
+                <span>✕</span>
+              </button>
+            ))}
+
+            <button
+              onClick={() => setSelectedLabels([])}
+              className="
+        px-3 py-2
+        rounded-full
+        border
+        text-sm
+      "
+            >
+              Clear
+            </button>
+
+          </div>
+        )}
+
         {/* ================= QUESTIONS ================= */}
 
         <div className="space-y-4 md:space-y-5">
@@ -794,34 +862,6 @@ export default function QuestionsPage() {
                     </button>
 
                   </div>
-
-                  {/* LABELS */}
-
-                  {q.labels?.length ? (
-                    <div className="flex flex-wrap gap-2 mt-4">
-
-                      {q.labels.map(
-                        (
-                          l,
-                          idx
-                        ) => (
-                          <span
-                            key={idx}
-                            className={`text-xs px-2 py-1 rounded-full text-white ${l.type ===
-                              "city"
-                              ? "bg-blue-500"
-                              : "bg-green-600"
-                              }`}
-                          >
-                            {
-                              l.value
-                            }
-                          </span>
-                        )
-                      )}
-
-                    </div>
-                  ) : null}
 
                   {/* ANSWER */}
 
@@ -988,48 +1028,192 @@ break-normal
 
       {/* ================= FILTER ================= */}
       {showFilter && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div
+            className="
+      w-[90%]
+      max-w-md
+      h-[66vh]
+      bg-white
+      rounded-3xl
+      shadow-2xl
+      overflow-hidden
+      flex flex-col
+    "
+          >
+            {/* HEADER */}
 
-          <div className="bg-white w-full max-w-md mx-auto p-5 rounded-3xl shadow-xl">
+            <div className="bg-white border-b px-5 py-5">
 
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-bold text-lg">Filter Labels</h2>
+              <div className="flex justify-between items-center">
 
-              <button onClick={() => setShowFilter(false)}>
-                ✕
+                <div>
+                  <h2 className="text-3xl font-bold">
+                    Filters
+                  </h2>
+
+                  <p className="text-gray-500 mt-1">
+                    Search questions by label
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* BODY */}
+
+            <div className="flex-1 overflow-y-auto">
+
+
+              {/* RIGHT OPTIONS */}
+
+              <div className="flex-1 overflow-y-auto">
+
+                {/* MMD */}
+
+                <div className="px-4 pt-4">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    MMD
+                  </h3>
+                </div>
+
+                {mmdLabels.map((label) => (
+                  <button
+                    key={label}
+                    onClick={() =>
+                      setSelectedLabels(
+                        selectedLabels[0] === label
+                          ? []
+                          : [label]
+                      )
+                    }
+                    className={`
+mx-4 my-2
+rounded-2xl
+border
+transition-all
+px-5 py-5
+flex items-center justify-between
+
+${selectedLabels[0] === label
+                        ? "bg-black text-white border-black"
+                        : "bg-white border-gray-200"
+                      }
+`}
+                  >
+                    <div className="flex items-center gap-3">
+
+                      <div
+                        className={`
+      w-10 h-10 rounded-xl
+      flex items-center justify-center
+
+      ${selectedLabels[0] === label
+                            ? "bg-white/20"
+                            : "bg-gray-100"
+                          }
+    `}
+                      >
+                        <BookOpen size={18} />
+                      </div>
+
+                      <span className="font-medium">
+                        {label}
+                      </span>
+
+                    </div>
+
+
+                  </button>
+                ))}
+                {/* SURVEYORS */}
+
+                <div className="px-4 pt-6">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    SURVEYORS
+                  </h3>
+                </div>
+
+                {surveyorLabels.map((label) => (
+                  <button
+                    key={label}
+                    onClick={() =>
+                      setSelectedLabels(
+                        selectedLabels[0] === label
+                          ? []
+                          : [label]
+                      )
+                    }
+                    className={`
+mx-4 my-2
+rounded-2xl
+border
+transition-all
+px-5 py-5
+flex items-center justify-between
+
+${selectedLabels[0] === label
+                        ? "bg-black text-white border-black"
+                        : "bg-white border-gray-200"
+                      }
+`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`
+w-10 h-10 rounded-xl
+flex items-center justify-center
+
+${selectedLabels[0] === label
+                            ? "bg-white/20"
+                            : "bg-gray-100"
+                          }
+`}
+                      >
+                        <BookOpen size={18} />
+                      </div>
+
+                      <span className="font-medium">
+                        {label}
+                      </span>
+                    </div>
+
+                  </button>
+                ))}
+
+
+              </div>
+            </div>
+
+            {/* FOOTER */}
+            <div className="border-t bg-white p-4">
+
+              <button
+                onClick={() => setShowFilter(false)}
+                className="
+      w-full
+      bg-black
+      text-white
+      py-4
+      rounded-2xl
+      font-semibold
+    "
+              >
+                Apply Filter
               </button>
+
             </div>
-
-            <div className="flex flex-wrap gap-2 mb-5">
-              {labelOptions.map((l) => (
-                <button
-                  key={l}
-                  onClick={() => toggleLabel(l)}
-                  className={`px-3 py-2 text-xs rounded-xl border ${selectedLabels.includes(l)
-                      ? "bg-black text-white border-black"
-                      : "bg-white text-black border-gray-200"
-                    }`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setShowFilter(false)}
-              className="w-full bg-black text-white p-3 rounded-2xl"
-            >
-              Done
-            </button>
-
           </div>
+
         </div>
       )}
 
       {/* ================= BOTTOM NAV ================= */}
 
-      <nav className="fixed bottom-0 left-0 z-50 w-full bg-white border-t border-gray-200 shadow-sm backdrop-blur-lg">
-        <div className="
+      {!showFilter && (
+        <nav className="fixed bottom-0 left-0 z-50 w-full bg-white border-t border-gray-200 shadow-sm backdrop-blur-lg">
+          <div className="
         w-full 
         max-w-md 
         md:max-w-4xl 
@@ -1046,44 +1230,44 @@ break-normal
       ">
 
 
-          {/* HOME */}
-          <button
-            onClick={() => router.push("/")}
-            className="flex flex-col items-center text-black font-semibold active:scale-95 transition-all duration-150"
-          >
-            <Home size={22} />
-            <span className="text-xs mt-1">Home</span>
-          </button>
+            {/* HOME */}
+            <button
+              onClick={() => router.push("/")}
+              className="flex flex-col items-center text-black font-semibold active:scale-95 transition-all duration-150"
+            >
+              <Home size={22} />
+              <span className="text-xs mt-1">Home</span>
+            </button>
 
-          {/* FILTER */}
+            {/* FILTER */}
 
-          <button
-            onClick={() => setShowFilter(true)}
-            className="flex flex-col items-center text-gray-400 hover:text-black active:scale-95 transition-all duration-150"
-          >
-            <Filter size={22} />
+            <button
+              onClick={() => setShowFilter(true)}
+              className="flex flex-col items-center text-gray-400 hover:text-black active:scale-95 transition-all duration-150"
+            >
+              <Filter size={22} />
 
-            <span className="text-xs mt-1">Filter</span>
-          </button>
+              <span className="text-xs mt-1">Filter</span>
+            </button>
 
-          {/* BOOKMARK */}
+            {/* BOOKMARK */}
 
-          <button
-            onClick={toggleBookmarksView}
-            className="flex flex-col items-center text-gray-400 hover:text-black active:scale-95 transition-all duration-150"
-          >
-            <Bookmark size={22} />
+            <button
+              onClick={toggleBookmarksView}
+              className="flex flex-col items-center text-gray-400 hover:text-black active:scale-95 transition-all duration-150"
+            >
+              <Bookmark size={22} />
 
-            <span className="text-xs mt-1">
-              {showBookmarksOnly ? "All" : "Bookmarks"}
-            </span>
-          </button>
+              <span className="text-xs mt-1">
+                {showBookmarksOnly ? "All" : "Bookmarks"}
+              </span>
+            </button>
 
 
-        </div>
+          </div>
 
-      </nav>
-
+        </nav>
+      )}
     </main>
   );
 }
