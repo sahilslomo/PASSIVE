@@ -28,6 +28,7 @@ import {
   Star,
   Search,
   MessageCircle,
+  Building,
 } from "lucide-react";
 
 import { db, auth, } from "@/lib/firebase";
@@ -1031,12 +1032,12 @@ break-normal
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div
             className="
-      w-[90%]
+      w-[40%]
       max-w-md
-      h-[66vh]
+      h-[50vh]
       bg-white
-      rounded-3xl
-      shadow-2xl
+      rounded-2xl
+      shadow-xl
       overflow-hidden
       flex flex-col
     "
@@ -1048,7 +1049,7 @@ break-normal
               <div className="flex justify-between items-center">
 
                 <div>
-                  <h2 className="text-3xl font-bold">
+                  <h2 className="text-2xl font-bold">
                     Filters
                   </h2>
 
@@ -1089,11 +1090,11 @@ break-normal
                       )
                     }
                     className={`
-mx-4 my-2
-rounded-2xl
+mx-3 my-1
+rounded-xl
 border
 transition-all
-px-5 py-5
+px-3 py-2
 flex items-center justify-between
 
 ${selectedLabels[0] === label
@@ -1106,7 +1107,7 @@ ${selectedLabels[0] === label
 
                       <div
                         className={`
-      w-10 h-10 rounded-xl
+      w-8 h-8 rounded-lg
       flex items-center justify-center
 
       ${selectedLabels[0] === label
@@ -1115,10 +1116,10 @@ ${selectedLabels[0] === label
                           }
     `}
                       >
-                        <BookOpen size={18} />
+                        <Building size={14} />
                       </div>
 
-                      <span className="font-medium">
+                      <span className="text-sm font-medium">
                         {label}
                       </span>
 
@@ -1146,11 +1147,11 @@ ${selectedLabels[0] === label
                       )
                     }
                     className={`
-mx-4 my-2
-rounded-2xl
+mx-3 my-1
+rounded-xl
 border
 transition-all
-px-5 py-5
+px-3 py-2
 flex items-center justify-between
 
 ${selectedLabels[0] === label
@@ -1162,7 +1163,7 @@ ${selectedLabels[0] === label
                     <div className="flex items-center gap-3">
                       <div
                         className={`
-w-10 h-10 rounded-xl
+w-8 h-8 rounded-lg
 flex items-center justify-center
 
 ${selectedLabels[0] === label
@@ -1171,10 +1172,10 @@ ${selectedLabels[0] === label
                           }
 `}
                       >
-                        <BookOpen size={18} />
+                        <Star size={14} />
                       </div>
 
-                      <span className="font-medium">
+                      <span className="text-sm font-medium">
                         {label}
                       </span>
                     </div>
@@ -1187,17 +1188,17 @@ ${selectedLabels[0] === label
             </div>
 
             {/* FOOTER */}
-            <div className="border-t bg-white p-4">
+            <div className="border-t bg-white p-4 flex justify-center">
 
               <button
                 onClick={() => setShowFilter(false)}
                 className="
-      w-full
-      bg-black
-      text-white
-      py-4
-      rounded-2xl
-      font-semibold
+      w-[40%]
+    bg-black
+    text-white
+    py-2
+    rounded-xl
+    font-semibold
     "
               >
                 Apply Filter
