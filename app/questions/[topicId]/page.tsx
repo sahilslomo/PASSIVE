@@ -1032,7 +1032,7 @@ break-normal
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div
             className="
-      w-[40%]
+      w-[60%]
       max-w-md
       h-[50vh]
       bg-white
@@ -1201,7 +1201,7 @@ ${selectedLabels[0] === label
     font-semibold
     "
               >
-                Apply Filter
+                Apply
               </button>
 
             </div>
