@@ -22,40 +22,129 @@ export async function POST(req: NextRequest) {
         console.log("QUESTION EMBEDDING LENGTH:", embedding.length);
 
         // 2. Get all chunks for topic
-        const chunksSnapshot = await adminDb
+        const transcriptSnapshot = await adminDb
             .collection("transcriptChunks")
             .where("topicId", "==", topicId)
             .get();
 
-        const chunks = chunksSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        }));
+        const transcriptChunks =
+            transcriptSnapshot.docs.map((doc) => ({
+                id: doc.id,
+                source: "transcript",
+                ...doc.data(),
+            }));
+
+        const globalSnapshot = await adminDb
+            .collection("globalFileChunks")
+            .where("topicId", "==", topicId)
+            .get();
+
+        const globalChunks =
+            globalSnapshot.docs.map((doc) => ({
+                id: doc.id,
+                source: "global",
+                ...doc.data(),
+            }));
+
+        const chunks = [
+            ...transcriptChunks,
+            ...globalChunks,
+        ];
+
+        console.log(
+            "TRANSCRIPT CHUNKS:",
+            transcriptChunks.length
+        );
+
+        console.log(
+            "GLOBAL FILE CHUNKS:",
+            globalChunks.length
+        );
+
+        console.log(
+            "TOTAL SEARCHABLE CHUNKS:",
+            chunks.length
+        );
 
         console.log("TOTAL CHUNKS:", chunks.length);
 
         // 3. Score chunks
-        const scoredChunks = chunks.map((chunk: any) => {
-            if (
-                !chunk.embedding ||
-                !Array.isArray(chunk.embedding) ||
-                !chunk.text
-            ) {
-                return { ...chunk, score: 0 };
-            }
+        const stopWords = [
+            "what",
+            "is",
+            "are",
+            "the",
+            "a",
+            "an",
+            "of",
+            "for",
+            "why",
+            "how",
+            "when",
+            "where",
+            "explain",
+        ];
 
-            if (chunk.embedding.length !== embedding.length) {
-                return { ...chunk, score: 0 };
-            }
-
-            const score = cosineSimilarity(
-                embedding,
-                chunk.embedding
+        const questionWords: string[] = question
+            .toLowerCase()
+            .split(/\s+/)
+            .filter(
+                (w: string) =>
+                    w.length > 2 &&
+                    !stopWords.includes(w)
             );
+
+        const scoredChunks = chunks.map((chunk: any) => {
+
+            let vectorScore = 0;
+
+            if (
+                chunk.embedding &&
+                Array.isArray(chunk.embedding) &&
+                chunk.text &&
+                chunk.embedding.length === embedding.length
+            ) {
+                vectorScore = cosineSimilarity(
+                    embedding,
+                    chunk.embedding
+                );
+            }
+
+            const chunkText =
+                String(chunk.text || "").toLowerCase();
+
+            let keywordScore = 0;
+
+            for (const word of questionWords) {
+
+                if (word.length < 3) continue;
+
+                if (chunkText.includes(word)) {
+                    keywordScore += 1;
+                }
+            }
+
+            if (
+                chunkText.includes(
+                    question.toLowerCase()
+                )
+            ) {
+                keywordScore += 2;
+            }
+
+            keywordScore =
+                keywordScore /
+                Math.max(questionWords.length, 1);
+
+            const hybridScore =
+                vectorScore * 0.6 +
+                keywordScore * 0.4;
 
             return {
                 ...chunk,
-                score,
+                vectorScore,
+                keywordScore,
+                score: hybridScore,
             };
         });
 
@@ -65,8 +154,8 @@ export async function POST(req: NextRequest) {
         );
 
         const topChunks = sortedChunks
-            .filter((c) => c.score >= 0.1)
-            .slice(0, 7);
+            .filter((c) => c.score >= 0.05)
+            .slice(0, 25);
 
         const finalChunks =
             topChunks.length > 0
@@ -74,10 +163,12 @@ export async function POST(req: NextRequest) {
                 : sortedChunks.slice(0, 5);
 
         console.log(
-            "FINAL TOP CHUNKS:",
+            "TOP CHUNKS",
             finalChunks.map((c) => ({
-                score: c.score,
-                text: c.text?.slice(0, 80),
+                hybrid: c.score,
+                vector: c.vectorScore,
+                keyword: c.keywordScore,
+                text: c.text?.slice(0, 100),
             }))
         );
 
@@ -117,8 +208,11 @@ export async function POST(req: NextRequest) {
             embeddingLength: embedding.length,
             chunkCount: chunks.length,
             topChunks: finalChunks.map((c) => ({
-                text: c.text,
+                source: c.source,
                 score: c.score,
+                vectorScore: c.vectorScore,
+                keywordScore: c.keywordScore,
+                text: c.text,
             })),
             context,
         });

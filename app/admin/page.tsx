@@ -103,6 +103,12 @@ export default function AdminPage() {
   const [transcriptText, setTranscriptText] = useState("");
   const [transcripts, setTranscripts] = useState<any[]>([]);
 
+  const [explanations, setExplanations] =
+    useState<Record<string, string>>({});
+
+  const [explainingQuestionId, setExplainingQuestionId] =
+    useState<string | null>(null);
+
   const [questions, setQuestions] = useState<any[]>([]);
 
   const [selectedTopic, setSelectedTopic] = useState("");
@@ -622,6 +628,53 @@ export default function AdminPage() {
       alert("Failed to delete question");
     }
   };
+
+  const handleExplainAI = async (
+    questionId: string,
+    questionText: string,
+    topicId: string
+  ) => {
+    try {
+
+      setExplainingQuestionId(questionId);
+
+      const response = await fetch(
+        "/api/explain-question",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            question: questionText,
+            topicId,
+          }),
+        }
+      );
+
+      const data =
+        await response.json();
+
+      setExplanations((prev) => ({
+        ...prev,
+        [questionId]:
+          data.answer ||
+          "No explanation generated.",
+      }));
+
+    } catch (error) {
+
+      console.error(error);
+
+    } finally {
+
+      setExplainingQuestionId(null);
+
+    }
+  };
+
+
 
   /* =========================
      LABEL HANDLERS
@@ -1204,9 +1257,71 @@ export default function AdminPage() {
                                   </div>
                                 )}
 
+                              {q.labels?.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-3">
+
+                                  {q.labels.map(
+                                    (l: any, i: number) => (
+                                      <span
+                                        key={i}
+                                        className="text-xs bg-black text-white px-2 py-1 rounded-full"
+                                      >
+                                        {l.value}
+                                      </span>
+                                    )
+                                  )}
+
+                                </div>
+                              )}
+
+                              {explanations[q.id] && (
+
+                                <div
+                                  className="
+      mt-4
+      border
+      border-cyan-200
+      bg-cyan-50
+      rounded-xl
+      p-4
+    "
+                                >
+
+                                  <p className="font-semibold mb-2">
+                                    🤖 AI Explanation
+                                  </p>
+
+                                  <p className="leading-7 text-gray-700">
+                                    {explanations[q.id]}
+                                  </p>
+
+                                </div>
+
+                              )}
+
                             </div>
 
                             <div className="flex flex-col gap-2">
+
+                              <button
+                                onClick={() =>
+                                  handleExplainAI(
+                                    q.id,
+                                    q.q,
+                                    q.topicId
+                                  )
+                                }
+                                className="
+      p-2
+      rounded-lg
+      bg-black
+      text-white
+    "
+                              >
+                                {explainingQuestionId === q.id
+                                  ? "..."
+                                  : "🤖"}
+                              </button>
 
                               <button
                                 onClick={() =>

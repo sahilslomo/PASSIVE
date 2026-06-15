@@ -166,17 +166,28 @@ Rules:
        GET ALL CHUNKS
     ========================= */
 
-    const chunksSnap =
+    const transcriptSnap =
         await adminDb
-            .collection(
-                "globalFileChunks"
-            )
-            .where(
-                "topicId",
-                "==",
-                topicId
-            )
+            .collection("transcriptChunks")
+            .where("topicId", "==", topicId)
             .get();
+
+    const globalSnap =
+        await adminDb
+            .collection("globalFileChunks")
+            .where("topicId", "==", topicId)
+            .get();
+
+    const chunks = [
+        ...transcriptSnap.docs.map((d) => ({
+            source: "transcript",
+            ...d.data(),
+        })),
+        ...globalSnap.docs.map((d) => ({
+            source: "global",
+            ...d.data(),
+        })),
+    ];
 
     console.log(
         "TOTAL CHUNKS:",
@@ -187,47 +198,46 @@ Rules:
        SCORE CHUNKS
     ========================= */
 
-    const scoredChunks =
-        chunksSnap.docs.map((doc) => {
+    const scoredChunks = chunks.map((data: any) => {
 
-            const data =
-                doc.data();
-
-            console.log(
-                "CHUNK:",
-                data.text?.slice(0, 100)
+        const vectorScore =
+            cosineSimilarity(
+                queryEmbedding,
+                data.embedding || []
             );
 
-            console.log(
-                "EMBEDDING EXISTS:",
-                !!data.embedding
-            );
+        const chunkText =
+            String(data.text || "")
+                .toLowerCase();
 
-            console.log(
-                "EMBEDDING LENGTH:",
-                data.embedding?.length
-            );
+        let keywordScore = 0;
 
-            const similarity =
-                cosineSimilarity(
-                    queryEmbedding,
-                    data.embedding || []
-                );
+        for (const word of queryWords) {
 
-            return {
+            if (word.length < 3) continue;
 
-                text:
-                    data.text || "",
+            if (chunkText.includes(word)) {
+                keywordScore++;
+            }
+        }
 
-                similarity,
+        keywordScore =
+            keywordScore /
+            Math.max(queryWords.length, 1);
 
-                fileName:
-                    data.fileName || "",
+        const hybridScore =
+            vectorScore * 0.7 +
+            keywordScore * 0.3;
 
-                chunkIndex:
-                    data.chunkIndex || 0,
-            };
-        });
+        return {
+            text: data.text || "",
+            score: hybridScore,
+            vectorScore,
+            keywordScore,
+            fileName: data.fileName || "",
+            source: data.source || "",
+        };
+    });
 
     /* =========================
        SORT BEST FIRST
@@ -269,7 +279,7 @@ Rules:
     const filteredChunks =
         uniqueChunks.filter(
             (chunk) =>
-                chunk.similarity > 0.35
+               chunk.score > 0.05
         );
 
     /* =========================
@@ -278,7 +288,7 @@ Rules:
 
     const topChunks =
         filteredChunks
-            .slice(0, 6);
+            .slice(0, 10);
 
     console.log(
         "TOP CHUNKS READY"

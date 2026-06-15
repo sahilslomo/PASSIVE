@@ -72,12 +72,6 @@ export default function QuestionsPage() {
   const [questions, setQuestions] =
     useState<Question[]>([]);
 
-  const [explanations, setExplanations] =
-    useState<Record<string, string>>({});
-
-  const [explainingQuestionId, setExplainingQuestionId] =
-    useState<string | null>(null);
-
   const [transcripts, setTranscripts] =
     useState<any[]>([]);
 
@@ -445,55 +439,6 @@ export default function QuestionsPage() {
     checkAccess();
 
   }, []);
-
-  const handleExplainAI = async (
-    questionId: string,
-    questionText: string
-  ) => {
-    try {
-      setExplainingQuestionId(questionId);
-
-      const response = await fetch(
-        "/api/explain-question",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            question: questionText,
-            topicId,
-          }),
-        }
-      );
-
-      const data =
-        await response.json();
-
-      setExplanations((prev) => ({
-        ...prev,
-        [questionId]:
-          data.answer ||
-          "No explanation generated.",
-      }));
-
-    } catch (error) {
-
-      console.error(error);
-
-      setExplanations((prev) => ({
-        ...prev,
-        [questionId]:
-          "Failed to generate explanation.",
-      }));
-
-    } finally {
-
-      setExplainingQuestionId(null);
-
-    }
-  };
 
   /* =========================
      ACTIONS
@@ -988,50 +933,6 @@ break-normal
                                 .replace(/\n/g, "<br/>"),
                         }}
                       />
-
-                      <button
-                        onClick={() =>
-                          handleExplainAI(
-                            id,
-                            q.question || q.q || ""
-                          )
-                        }
-                        className="
-    mt-4
-    w-full
-    bg-black
-    text-white
-    py-3
-    rounded-xl
-    font-medium
-  "
-                      >
-                        {explainingQuestionId === id
-                          ? "Explaining..."
-                          : "✨ Explain With AI"}
-                      </button>
-
-                      {explanations[id] && (
-                        <div
-                          className="
-      mt-4
-      border
-      border-cyan-200
-      bg-cyan-50
-      rounded-2xl
-      p-4
-    "
-                        >
-                          <p className="font-semibold mb-2">
-                            🤖 AI Explanation
-                          </p>
-
-                          <p className="leading-7 text-gray-700">
-                            {explanations[id]}
-                          </p>
-                        </div>
-                      )}
-
                     </div>
                   )}
 
