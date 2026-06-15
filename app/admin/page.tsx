@@ -312,6 +312,8 @@ export default function AdminPage() {
     }
   };
 
+
+
   /* =========================
      ADD TRANSCRIPT
   ========================= */
@@ -333,27 +335,30 @@ export default function AdminPage() {
           (t) => t.id === selectedTopic
         );
 
-      await addDoc(
+      const transcriptRef = await addDoc(
         collection(db, "transcripts"),
         {
           topicId: selectedTopic,
-
-          topicTitle:
-            selectedTopicData?.title || "",
-
-          classId:
-            selectedTopicData?.classId || "",
-
-          functionId:
-            selectedTopicData?.functionId || "",
-
+          topicTitle: selectedTopicData?.title || "",
+          classId: selectedTopicData?.classId || "",
+          functionId: selectedTopicData?.functionId || "",
           name: transcriptName,
-
           text: transcriptText,
-
           createdAt: Date.now(),
         }
       );
+
+      await fetch("/api/build-knowledge", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          transcriptId: transcriptRef.id,
+          topicId: selectedTopic,
+          text: transcriptText,
+        }),
+      });
 
       setTranscriptName("");
       setTranscriptText("");
