@@ -21,6 +21,9 @@ import { buildConversationMemory }
 import { postProcessResponse }
     from "@/lib/ai/postprocess/postProcessResponse";
 
+import { retrieveTranscriptChunks }
+    from "@/lib/ai/retrieval/retrieveTranscriptChunks";
+
 const openai =
     new OpenAI({
         apiKey:
@@ -95,60 +98,33 @@ ${data.answer || data.a}
         }
 
         /* =========================
-           TRANSCRIPTS
-        ========================= */
+        TRANSCRIPT RETRIEVAL
+     ========================= */
 
-        let transcriptsText = "";
+        let transcriptChunksText = "";
 
         if (useTranscripts) {
 
-            const transcriptsSnap =
-                await adminDb
-                    .collection(
-                        "transcripts"
-                    )
-                    .where(
-                        "topicId",
-                        "==",
-                        topicId
-                    )
-                    .get();
+            const transcriptChunks =
+                await retrieveTranscriptChunks({
+                    topicId,
+                    message,
+                    limit: 5,
+                });
 
-            transcriptsText =
-                transcriptsSnap.docs
-                    .map((doc: any) => {
-
-                        const data =
-                            doc.data();
-
-                        return (
-                            data.text ||
-                            data.transcript ||
-                            data.content ||
-                            ""
-                        );
-                    })
-                    .join("\n\n");
-        }
-
-        /* =========================
-           LOCAL FILES
-        ========================= */
-
-        let localFilesText = "";
-
-        if (useLocalFiles) {
-
-            localFilesText =
-                uploadedFiles
+            transcriptChunksText =
+                transcriptChunks
                     .map(
-                        (file: any) =>
-                            `
-FILE:
-${file.name}
+                        (chunk, index) => `
+
+=== TRANSCRIPT CHUNK ${index + 1} ===
+
+SIMILARITY:
+${chunk.similarity}
 
 CONTENT:
-${file.extractedText}
+${chunk.text}
+
 `
                     )
                     .join("\n\n");
@@ -163,6 +139,23 @@ ${file.extractedText}
                 })
                 : "";
 
+        let localFilesText = "";
+
+        if (useLocalFiles) {
+
+            localFilesText =
+                uploadedFiles
+                    .map(
+                        (file: any) => `
+FILE:
+${file.name}
+
+CONTENT:
+${file.extractedText}
+`
+                    )
+                    .join("\n\n");
+        }
 
         /* =========================
            FINAL KNOWLEDGE
@@ -172,8 +165,8 @@ ${file.extractedText}
 QUESTIONS:
 ${questionsText}
 
-TRANSCRIPTS:
-${transcriptsText}
+TRANSCRIPT CHUNKS:
+${transcriptChunksText}
 
 SEMANTIC SEARCH RESULTS:
 ${relevantChunksText}
@@ -182,7 +175,7 @@ ${relevantChunksText}
 
         console.log("QUESTIONS LENGTH:", questionsText.length);
 
-        console.log("TRANSCRIPTS LENGTH:", transcriptsText.length);
+        console.log("TRANSCRIPT CHUNK LENGTH:", transcriptChunksText.length);
 
         console.log("LOCAL FILES LENGTH:", localFilesText.length);
 
